@@ -79,13 +79,13 @@ create('div', {}, [
 ])
 ```
 
-Second, you are allowed to use strings.
+Second, can use strings.
 
 ```javascript
-create('div', {} [ "A text node inside a div" ]);
+create('div', {}, [ "A text node inside a div" ]);
 ```
 
-Lastly, you are allowed to use arrays. If you pass an array in as a child, each node in that array _must_ be given a unique `key` attribute (unique to the iteration, not globally unique). If keys aren't there, errors shall be thrown. This allows lightningDOM to work much more efficiently when diffing this array against a future version.
+Lastly, you can use arrays. If you pass an array in as a child, each node in that array _must_ be given a unique `key` attribute (unique to the iteration, not globally unique). If keys aren't there, errors shall be thrown. This allows lightningDOM to work much more efficiently when diffing this array against a future version.
 
 ```javascript
 create('ul', {}, [
