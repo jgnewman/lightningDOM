@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>test</title>
+</head>
+<body>
+<script src="./lightning-dom.js"></script>
+<script>
+var app = lightningDOM();
+window.create = app.create;
+window.render = app.render;
+window.update = app.update;
+</script>
+<script>
+window.addEventListener('load', () => {
+
+
+console.log('executing');
+
+var initArr = [];
+for (var i = 0; i < 1000; i += 1) {
+  initArr.push(i);
+}
+var newArr = initArr.filter(item => item % 2 === 0);
+
+
+
+var tree1 =
+create('div', {style: "background: #eaeaea;"}, [
+  create('button', {onclick: rerender}, [ "rerender" ]),
+  create('ul', {}, [
+    initArr.map(item => create('li', {key: item+""}, [item]))
+  ])
+])
+
+render(tree1, document.body)
+
+function rerender() {
+  var now = window.now = +new Date;
+
+  var tree2 =
+  create('div', {style: "background: #eaeaea;"}, [
+    create('button', {onclick: rerender}, [ "rerender" ]),
+    create('ul', {}, [
+      newArr.map(item => create('li', {key: item+""}, [item]))
+    ])
+  ])
+
+  update(tree1, tree2);
+
+  console.log('build time:', (+new Date) - now);
+}
+
+
+
+
+
+
+
+
+});
+</script>
+</body>
+</html>
