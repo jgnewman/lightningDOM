@@ -33,15 +33,16 @@ create('div', {style: "background: #eaeaea;"}, [
     initArr.map(item => create('li', {key: item+""}, [item]))
   ])
 ])
+var tree2;
 
 render(tree1, document.body)
 
 function rerender() {
   var now = window.now = +new Date;
 
-  var tree2 =
+  tree2 =
   create('div', {style: "background: #eaeaea;"}, [
-    create('button', {onclick: rerender}, [ "rerender" ]),
+    create('button', {onclick: goback}, [ "rerender" ]),
     create('ul', {}, [
       newArr.map(item => create('li', {key: item+""}, [item]))
     ])
@@ -50,6 +51,10 @@ function rerender() {
   migrate(tree1, tree2);
 
   console.log('build time:', (+new Date) - now);
+}
+
+function goback() {
+  migrate(tree2, tree1);
 }
 
 
