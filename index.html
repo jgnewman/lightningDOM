@@ -10,7 +10,7 @@
 var app = lightningDOM();
 window.create = app.create;
 window.render = app.render;
-window.update = app.update;
+window.migrate = app.migrate;
 </script>
 <script>
 window.addEventListener('load', () => {
@@ -47,7 +47,7 @@ function rerender() {
     ])
   ])
 
-  update(tree1, tree2);
+  migrate(tree1, tree2);
 
   console.log('build time:', (+new Date) - now);
 }

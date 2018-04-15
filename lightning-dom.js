@@ -557,7 +557,7 @@
     // This is the function you use to render your initial Node tree
     // into the real DOM, where tree is a Node tree and `into` is a
     // real DOM node. It biulds the tree, appends it to the node,
-    // and runs any onmount tasks it collected.
+    // and runs any onmount tasks it cupdateollected.
     function renderProcess(tree, into) {
       into.innerHTML = "";
       into.appendChild(tree.build());
@@ -671,7 +671,7 @@
     // run loop, we can skip most of them and migrate straight from
     // the current state to the latest state, skipping all steps
     // in between.
-    function update(prevTree, nextTree) {
+    function migrate(prevTree, nextTree) {
       defer(prevTree, nextTree);
       return nextTree;
     }
@@ -680,7 +680,7 @@
     return {
       create: create,
       render: render,
-      update: update
+      migrate: migrate
     };
 
   } // end app function
