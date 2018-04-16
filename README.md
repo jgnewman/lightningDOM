@@ -2,18 +2,18 @@
 
 _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
 
-> Current Size: 4.4kb min | 3.0kb min + gzip
+> Current Size: 5kb min | 3.5kb min + gzip
 
 ## What is this thing and how do I use it?
 
-LightningDom provides an extremely simple API consisting of only three functions: `create`, `render`, and `migrate`. It allows you to build a tree of virtual nodes, render that tree into the real DOM, then diff your tree against another virtual tree and apply the changes, thus automatically updating the real DOM. It's exactly what you'd expect!
+LightningDom provides an extremely simple API consisting of three main functions: `create`, `render`, and `migrate`. It allows you to build a tree of virtual nodes, render that tree into the real DOM, then diff your tree against another virtual tree and apply the changes, thus automatically updating the real DOM. It's exactly what you'd expect!
 
 Here's a quick example app:
 
 ```javascript
-import lightningDOM from 'lightningDOM';
+import { create, app } from 'lightningDOM';
 
-const { create, render, migrate } = lightningDOM();
+const { render, migrate } = app();
 
 // Generate a virtual DOM structure
 const vdom =
@@ -43,11 +43,11 @@ function rerender() {
 }
 ```
 
-**But why do I have to call lightningDOM as a function first?**
+**Why does `create` exist at the top level but `render` and `migrate` only exist after calling the `app` function?**
 
-Because every instance of `lightningDOM()` gives you an independent lightningDOM "app". This way you can have many simultaneous apps running on the same page.
+Because every instance of `lightningDOM.app()` gives you an independent lightningDOM "app". Creating virtual nodes is kind of a global thing. But rendering them into a particular place on the page and updating that section of real DOM automatically is the job of a lightningDOM app. Organizing things this way way allows you to have many simultaneous lightningDOM apps running on the same page, completely independent of each other!
 
-Now let's talk about each function.
+Now let's talk about those functions.
 
 #### `create(String tag [, Object attributes, Array children])`
 
@@ -99,7 +99,7 @@ create('ul', {}, [
 This function takes a virtual tree you have built and renders it into the real DOM in a target of your choosing.
 
 ```javascript
-render(
+app.render(
   create('div', {}, [ 'Hello, world!' ]),
   document.querySelector('#app-container')
 );
@@ -122,15 +122,15 @@ function buildTree(msg) {
 
 const v1 = buildTree('Hello, world!');
 
-render(v1, document.body);
+app.render(v1, document.body);
 
 const v2 = buildTree('Goodbye, world!');
 
-migrate(v1, v2);
+app.migrate(v1, v2);
 
 const v3 = buildTree('Who wants pizza?');
 
-migrate(v2, v3);
+app.migrate(v2, v3);
 ```
 
 Note that `migrate` is also asynchronous. Apart from making things non-blocking, this serves an important purpose. In the example above, no time passes between creating and updating each subsequent version of the app. When it loads in the browser, it'll run so fast that the user won't even see our first two versions; they'll only see the last one. In a case like this, there is no reason to diff each of these versions against each other and apply changes to the DOM every time. That would be a waste. Rather, what we should _really_ do, is just render `v3` right off the bat and skip everything else!
@@ -166,3 +166,5 @@ There is one caveat to all of this. If you create an `onmount` function for a no
 ## So how does it measure up against other virtual DOMs?
 
 As of today, I'm not sure. We can tell it's small and it certainly _feels_ fast but official benchmarks are still to come.
+
+For now, I can tell you that it renders an initial 10,000 items in the blink of an eye. You can delete all the odd numbered items in just over 1s, and you can put them all back a little more quickly. It's pretty dang good. (Tests performed on Vivaldi 1.14, Ubuntu 17.10, Intel Core i7, 16GB ram)

@@ -7,8 +7,8 @@
 <body>
 <script src="./lightning-dom.js"></script>
 <script>
-var app = lightningDOM();
-window.create = app.create;
+var app = lightningDOM.app();
+window.create = lightningDOM.create;
 window.render = app.render;
 window.migrate = app.migrate;
 </script>
