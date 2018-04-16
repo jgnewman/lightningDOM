@@ -124,7 +124,7 @@
           if (i !== 'key') {
             typeof this.attrs[i] === 'function'
               ? elem[i] = this.attrs[i]
-              : elem.setAttribute(i, this.attrs[i]); // TODO: translate attribute names?
+              : elem.setAttribute(i, this.attrs[i]);
           }
         }
 
@@ -355,10 +355,22 @@
     // Anything from the next list that doesn't match the prev list can be added.
     function compareKeylistNodes(prev, next) {
 
-      // We'll prepare to collect a list of Changes and an object
-      // that will store matching items between both lists.
+      // We'll prepare to collect a list of Changes and some objects that will
+      // be necessary for sorting.
+      // - Additions is an object where keys are list keys of items that need
+      //   to be added and values are `true`.
+      // - Matches is an object where keys are list keys and values are two-
+      //   item arrays representing nodes that are in both lists. The array
+      //   indexes indicate its old list index and its new list index.
+      // - RemovalIndexes is just an array of the indexes of all items to
+      //   be removed from the keylist.
       var changes = [];
+      var additions = {};
       var matches = {};
+      var removalIndexes = [];
+
+      var lastMatchIndex = -1;
+      var matchesAreInOrder = true;
 
       // Grab list lengths for efficiency.
       var prevlen = prev.children.length;
@@ -379,28 +391,44 @@
             throw new Error(NO_KEY_ERROR);
           }
 
-          // IF we find two Nodes with matching keys, we will mark that we
-          // found a match both locally and at function scope. We will also
+          // If we find two Nodes with matching keys, we will mark that we
+          // found a match both locally and at function scope as well as
+          // collect both the old and new indexes for the match. We will also
           // compare our matching nodes and add the result to the changes array.
+          // Third, check and track if our matches have been reordered.
           // Lastly, we break out of the subloop.
           if (nextChild.key === prevChild.key) {
-            matches[prevChild.key] = found = true;
+            matches[prevChild.key] = [i, j]; // old index and new index
+            found = true;
             changes = changes.concat(prevChild.compareTo(nextChild));
+
+            // If the index of the match is less than the last index of a match then
+            // we know matches have been reordered.
+            if (j < lastMatchIndex) {
+              matchesAreInOrder && (matchesAreInOrder = false);
+              reorders[prevChild]
+            }
+            if (matchesAreInOrder && j < lastMatchIndex) {
+              matchesAreInOrder = false
+            }
+            lastMatchIndex = j;
+
             break;
           }
         }
 
-        // If we didn't find a matching item in the sublist, we know this
+        // If we didn't find a matching item in the next list, we know this
         // Node can be removed.
         if (!found) {
           changes.push(new Change(REMOVE_NODE, prevChild));
+          removalIndexes.push(i);
         }
       }
 
       // Now that we've already looped over the entire prev list looking
       // for matches and stored all the ones we found, we don't need to go
       // through that whole process for the next list. Instead, we can just
-      // loop over each item and check whether its key exist in our matches
+      // loop over each item and check whether its key exists in our matches
       // collection. If so, we can skip it. If not, we know that Node should
       // be added.
       for (var i = 0; i < nextlen; i += 1) {
@@ -410,14 +438,26 @@
           throw new Error(NO_KEY_ERROR);
         }
 
+        // We don't want to add any global ADD NODE changes here because
+        // these additions are contained to the keylist and could be
+        // dispersed among previously-existing items. Our most efficient
+        // potential sort requires us to keep track of which children should
+        // be added and then add them in context of a SORT manipulation.
         if (!matches.hasOwnProperty(nextChild.key)) {
-          changes.push(new Change(ADD_NODE, null, nextChild, prev.parentNode.node));
+          additions[nextChild.key] = true;
         }
       }
 
-      // Since we compared keylists, we know that a sort will have to
-      // happen when the DOM updates.
-      changes.push(new Change(SORT, prev, next));
+      // If any of our matching items were reordered or if we have any new
+      // items to add, we'll trigger a SORT manipulation.
+      if (!matchesAreInOrder || Object.keys(additions).length) {
+        changes.push(new Change(SORT, prev, next, {
+          parentNode: prev.parentNode.node,
+          matches: matches,
+          additions: additions,
+          removalIndexes: removalIndexes
+        }));
+      }
 
       return changes;
     }
@@ -439,7 +479,8 @@
     // To execute ADD_NODE, build the new Node and append it to the
     // real parent node we collected as data in the Change.
     function addNode(change) {
-      change.data.appendChild(change.next.build());
+      var parent = change.data;
+      parent.appendChild(change.next.build());
     }
 
     // To execute REMOVE_NODE, get the real parent node of the old
@@ -498,19 +539,90 @@
       change.next.node = change.prev.node;
     }
 
-    // To execute SORT, we just need to make the DOM elements move to
-    // the correct order. We have to assume that our "next" Node is a
-    // keylist Node, otherwise we shouldn't be sorting. Grab a reference to
-    // the real parent node of all of the real child nodes in the list.
-    // Loop through the child Nodes and insert the previous real node
-    // just before the current real node, to get the order correct.
+    // Sort helper to determine how many items will be removed from
+    // a keylist with indexes smaller than a given item in the list.
+    function getRemovalsToCome(removalIndexes, breakpoint) {
+      var len = removalIndexes.length;
+      var toRemove = 0;
+      for (var i = 0; i < len; i += 1) {
+        if (removalIndexes[i] < breakpoint) {
+          toRemove += 1;
+        } else {
+          break;
+        }
+      }
+      return toRemove;
+    }
+
+    // Sort helper to determin whether or not an item in a keylist should
+    // be reordered in the DOM.
+    function shouldReorderItem(item, isLast, additionsToCome, change) {
+      var prevChildren = change.prev.children;
+      var movedToLast = isLast && prevChildren[prevChildren - 1].key === item.key;
+      var indexes = change.data.matches[item.key];
+      var indexDiff = indexes[1] - indexes[0];
+      var indexIncreased = indexDiff > 0;
+
+      return movedToLast ||
+        (!isLast &&
+          indexIncreased &&
+            indexDiff !== (additionsToCome - getRemovalsToCome(
+              change.data.removalIndexes,
+              indexes[0]
+            )));
+    }
+
+    // This function should only be called in relation to keylist nodes.
+    // To execute SORT, we will add new real nodes to the keylist
+    // as well as reorder items if necessary. We will not remove or change any
+    // nodes here as those should have already been removed and changed.
+    // This should be efficient. We DO NOT want to repaint the whole list
+    // item by item if we can avoid it.
     function sortNodes(change) {
-      var items = change.next.children;
-      var loopLen = items.length - 1;
-      var parent = items[0] && items[0].node.parentNode;
-      for (var i = loopLen; i >= 0; i -= 1) {
-        if (i > 0) {
-          parent.insertBefore(items[i-1].node, items[i].node);
+      var totalItems = change.next.children;
+      var looplen = totalItems.length - 1;
+      var parentNode = change.data.parentNode;
+
+      // Matches is an object where keys are keylist keys, and
+      // values are two-item arrays representing the node's
+      // previous index and new index in the keylist. { fookey: [prevIndex, newIndex] }
+      var matches = change.data.matches;
+
+      // Additions is an object where keys are keylist keys and
+      // every value is `true`. It exists to tell us that a given child in
+      // the list should be treated as a new addition.
+      var additions = change.data.additions;
+      var additionsToCome = Object.keys(additions).length;
+
+      // Loop backward over the new list of children.
+      for (var i = looplen; i >= 0; i -= 1) {
+        var item = totalItems[i];
+
+        // If the child exists in the matches object, it can't exist in
+        // the additions object. We need to see whether we should move it
+        // from where it currently sits in the DOM to before the last item
+        // we handled (since we're looping backward).
+        if (matches.hasOwnProperty(item.key)) {
+          var indexes = matches[item.key];
+          var isLast = i === looplen;
+
+          // The item should be reordered if it has moved into last position OR
+          // if it's not last and its new index is greater than its old index
+          // and the difference between its indexes does not equal the amount
+          // of items still to add minus the amount of items behind it to
+          // be removed.
+          if (shouldReorderItem(item, isLast, additionsToCome, change)) {
+            var sibling = totalItems[i + 1];
+            parentNode.insertBefore(item.node, sibling ? sibling.node : null);
+          }
+
+        // If the child exists in the additions object, then we know we
+        // need to build it now and insert it before the previous item we
+        // dealt with (since we're looping backward).
+        } else if (additions.hasOwnProperty(item.key)) {
+          var sibling = totalItems[i + 1];
+          parentNode.insertBefore(item.build(), sibling ? sibling.node : null);
+          additionsToCome -= 1;
         }
       }
     }

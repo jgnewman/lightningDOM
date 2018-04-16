@@ -19,12 +19,14 @@ window.addEventListener('load', () => {
 console.log('executing');
 
 var initArr = [];
-for (var i = 0; i < 1000; i += 1) {
+for (var i = 0; i < 10000; i += 1) {
   initArr.push(i);
 }
 var newArr = initArr.filter(item => item % 2 === 0);
 
-
+// Before smart sort we're looking at about 1.5 seconds to remove them
+// and about 6s to put them back. If smart sort is good, our target is
+// for it to take more like 3s to put them back. (at 10000)
 
 var tree1 =
 create('div', {style: "background: #eaeaea;"}, [
