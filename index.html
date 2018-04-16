@@ -15,9 +15,6 @@ window.migrate = app.migrate;
 <script>
 window.addEventListener('load', () => {
 
-
-console.log('executing');
-
 var initArr = [];
 for (var i = 0; i < 10000; i += 1) {
   initArr.push(i);
@@ -51,8 +48,6 @@ function rerender() {
   ])
 
   migrate(tree1, tree2);
-
-  console.log('build time:', (+new Date) - now);
 }
 
 function goback() {
