@@ -4,7 +4,9 @@ _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
 
 > Current Size: 5kb min | 3kb min + gzip
 
-## What is this and how do I use it?
+![Travis Build](https://travis-ci.org/jgnewman/lightningDOM.svg?branch=master)
+
+## What is this thing and how do I use it?
 
 LightningDom provides an extremely simple API consisting of three main functions: `create`, `render`, and `migrate`. It allows you to build a tree of virtual nodes, render that tree into the real DOM, then diff your tree against another virtual tree and apply the changes, thus automatically updating the real DOM. It's exactly what you'd expect!
 
