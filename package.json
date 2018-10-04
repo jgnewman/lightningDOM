@@ -1,5 +1,5 @@
 {
-  "name": "lightningDOM",
+  "name": "lightning-dom",
   "version": "1.0.1",
   "main": "lightning-dom.js",
   "repository": "git@github.com:jgnewman/lightningDOM",
