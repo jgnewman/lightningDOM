@@ -1,8 +1,18 @@
 {
   "name": "lightningDOM",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "lightning-dom.js",
   "repository": "git@github.com:jgnewman/lightningDOM",
   "author": "john <rescuecreative@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "test": "mocha",
+    "minify": "uglifyjs ./lightning-dom.js --compress --mangle --output ./lightning-dom-min.js"
+  },
+  "devDependencies": {
+    "http-shutdown": "1.2.0",
+    "mocha": "5.2.0",
+    "puppeteer": "1.8.0",
+    "uglify-js": "3.4.9"
+  }
 }
