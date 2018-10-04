@@ -812,5 +812,7 @@
     window.lightningDOM = out;
   }
 
+  return out;
+
   // Close out our old-school module function
 }());
