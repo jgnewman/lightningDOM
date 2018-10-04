@@ -804,11 +804,13 @@
     create: create
   };
 
-  // Make sure this can be imported as a package in various
-  // build systems or is attached to the window object.
+  // Create module.exports if they exist
   if (typeof module !== 'undefined') {
     module.exports = out;
-  } else {
+  }
+
+  // Inject a global into window if it exists.
+  if (typeof window !== 'undefined') {
     window.lightningDOM = out;
   }
 
