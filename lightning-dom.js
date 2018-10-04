@@ -17,7 +17,7 @@
 // Open up an old-school module function.
 (function () {
   var NO_BROWSER_ERROR = "You can't use lightningDOM in a non-browser environment."
-  var NO_KEY_ERROR = "All nodes in an iteration must have a unique `key` attribute."
+  var NO_KEY_ERROR = "All nodes in an iteration must have a unique `key` string attribute."
 
   // Constants we can use to reference all of the possibilities
   // for node changes resulting from a diff.
@@ -77,9 +77,15 @@
     // Here, we'll build a real node out of our virtual Node,
     // then loop over the children building their nodes as well.
     // We return the tree of real nodes.
-    build: function (realParent) {
+    build: function (realParent, parentIsKeylist) {
       var childLength = this.children.length;
+      var isKeylist = false;
       var elem;
+
+      // Don't allow keylist items without key attrs to build.
+      if (parentIsKeylist && typeof this.key !== 'string') {
+        throw new Error(NO_KEY_ERROR);
+      }
 
       // Create a text node instead of an element if this is
       // supposed to be a text node.
@@ -89,6 +95,7 @@
       // We'll use the parent as the element to append children to
       // if we have a keylist as opposed to a single node.
       } else if (this.tag === 'keylist') {
+        isKeylist = true;
         elem = realParent;
 
       } else {
@@ -109,7 +116,7 @@
       // Loop over all the children, build them, and append them
       // to this node.
       for (var j = 0; j < childLength; j += 1) {
-        var built = this.children[j].build(elem);
+        var built = this.children[j].build(elem, isKeylist);
         built && elem.appendChild(built);
       }
 
@@ -582,7 +589,7 @@
       return toRemove;
     }
 
-    // Sort helper to determin whether or not an item in a keylist should
+    // Sort helper to determine whether or not an item in a keylist should
     // be reordered in the DOM.
     function shouldReorderItem(item, isLast, additionsToCome, change) {
       var prevChildren = change.prev.children;

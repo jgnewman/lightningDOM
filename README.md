@@ -2,7 +2,7 @@
 
 _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
 
-> Current Size: 5kb min | 3.5kb min + gzip
+> Current Size: 5kb min | 3kb min + gzip
 
 ## What is this thing and how do I use it?
 
