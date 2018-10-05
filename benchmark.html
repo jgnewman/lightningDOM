@@ -3,23 +3,51 @@
   <head>
     <meta charset="utf-8">
     <title>benchmark</title>
+    <style type="text/css">
+      .container {
+        float: left;
+        width: 275px;
+        padding: 10px;
+        margin-top: 10px;
+        background: #eaeaea;
+        position: relative;
+      }
+      .container:nth-child(even) {
+        background: #fafafa;
+      }
+      .skip-box {
+        position: absolute;
+        top: 35px;
+        right: 20px;
+      }
+    </style>
   </head>
   <body>
+
     <h1>Informal Benchmarks!</h1>
     <p>This test requires Chrome 69 or higher.</p>
     <p>We're going to render 10,000 elements, remove half of them and re-sort, then resort again while adding them back in.</p>
+
     <div>
       <button id="go">Run test</button>
     </div>
 
-    <div id="ld-container" style="float: left; width: 300px; padding: 10px; margin-top: 10px; background: #eaeaea;">
+    <div id="ld-container" class="container">
       <h2>lightningDOM</h2>
+      <div class="skip-box">
+        <input id="ld-skip" type="checkbox"/>
+        Skip test
+      </div>
       <span id="ld-output" style="display:block; height: 25px;"></span>
       <div id="ld-app"></div>
     </div>
 
-    <div id="r-container" style="float: left; width: 300px; padding: 10px; margin-top: 10px; background: #fafafa;">
+    <div id="r-container" class="container">
       <h2>React</h2>
+      <div class="skip-box">
+        <input id="r-skip" type="checkbox"/>
+        Skip test
+      </div>
       <span id="r-output" style="display:block; height: 25px;"></span>
       <div id="r-app"></div>
     </div>
@@ -52,12 +80,44 @@
         setTimeout(fn, 0)
       }
 
-      let timesRan = 0;
-      let durations = [];
+      let timesRan = 0
+      let durations = []
+      let currentTest = null
+      function next() {
+        const fns = [goLightning, goReact]
 
+        timesRan = 0
+        durations = []
+
+        if (!currentTest) {
+          currentTest = fns[0]
+          return currentTest()
+        }
+
+        const index = fns.indexOf(currentTest)
+        currentTest = fns[index + 1] || null
+        if (index >= fns.length) return;
+        return currentTest()
+      }
+
+      document.querySelector('#go').addEventListener('click', () => {
+        document.querySelector('#ld-output').innerHTML = ''
+        document.querySelector('#r-output').innerHTML = ''
+        currentTest = null
+        next()
+      })
+
+      /**********************************
+      * Test functions after this point
+      **********************************/
+
+      // Test for lightningDOM
       function goLightning() {
         let beginStamp = null
         const output = document.querySelector('#ld-output')
+
+        const skip = document.querySelector('#ld-skip')
+        if (skip.checked) return defer(next)
 
         function end() {
           defer(() => {
@@ -69,9 +129,7 @@
               goLightning()
             } else {
               output.innerHTML = `Average seconds: ${average(durations)}`
-              timesRan = 0
-              durations = []
-              defer(goReact)
+              defer(next)
             }
           })
         }
@@ -100,10 +158,17 @@
         app.migrate(tree3, tree4)
       }
 
-
+      // Test for React
       function goReact() {
         let beginStamp = null
         const output = document.querySelector('#r-output')
+
+        const skip = document.querySelector('#r-skip')
+        if (skip.checked) return defer(next)
+
+        if (!output.innerHTML.trim()) {
+          output.innerHTML = 'Running...'
+        }
 
         class MyApp extends React.Component {
           constructor() {
@@ -133,27 +198,14 @@
               goReact()
             } else {
               output.innerHTML = `Average seconds: ${average(durations)}`
-              timesRan = 0
-              durations = []
+              defer(next)
             }
           })
-        }
-
-        if (!output.innerHTML.trim()) {
-          output.innerHTML = 'Running...'
         }
 
         beginStamp = performance.now()
         ReactDOM.render(React.createElement(MyApp), document.querySelector('#r-app'))
       }
-
-      document.querySelector('#go').addEventListener('click', () => {
-        document.querySelector('#ld-output').innerHTML = ''
-        document.querySelector('#r-output').innerHTML = ''
-        timesRan = 0
-        durations = []
-        goLightning()
-      })
 
     </script>
   </body>
