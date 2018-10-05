@@ -6,19 +6,17 @@
     <style type="text/css">
       .container {
         float: left;
-        width: 275px;
+        width: 200px;
         padding: 10px;
         margin-top: 10px;
         background: #eaeaea;
-        position: relative;
       }
       .container:nth-child(even) {
         background: #fafafa;
       }
-      .skip-box {
-        position: absolute;
-        top: 35px;
-        right: 20px;
+      .output {
+        display:block;
+        height: 25px;
       }
     </style>
   </head>
@@ -27,34 +25,72 @@
     <h1>Informal Benchmarks!</h1>
     <p>This test requires Chrome 69 or higher.</p>
     <p>We're going to render 10,000 elements, remove half of them and re-sort, then re-sort again while adding them back in.</p>
+    <p>
+      Worthy of note: I had a request to benchmark against morphdom. The reason you don't see it here is because,
+      when I tried to write a test case for it, it turned out that manipulating the real DOM was so incredibly slow
+      and expensive that it repeatedly crashed the browser, even when I attempted to reduce the test load by 90%.
+      I have a suspicion that you would get the same result from any real-DOM manipulation library. Also, I'm aware
+      that the output from the virtual-dom test is super crazy. I'm not sure if I'm doing something wrong or if
+      virtual-dom just doesn't quite understand how to handle this scenario (docs are hard to find). I welcome any tips.
+      These are just informal benchmarks after all.
+    </p>
 
     <div>
       <button id="go">Run test</button>
     </div>
 
+    <!-- lightningDOM output -->
     <div id="ld-container" class="container">
+      <input id="ld-skip" type="checkbox"/> Skip test
       <h2>lightningDOM</h2>
-      <div class="skip-box">
-        <input id="ld-skip" type="checkbox"/>
-        Skip test
-      </div>
-      <span id="ld-output" style="display:block; height: 25px;"></span>
+      <span id="ld-output" class="output"></span>
       <div id="ld-app"></div>
     </div>
 
-    <div id="r-container" class="container">
-      <h2>React</h2>
-      <div class="skip-box">
-        <input id="r-skip" type="checkbox"/>
-        Skip test
+    <!-- vue output -->
+    <div id="vue-container" class="container">
+      <input id="vue-skip" type="checkbox"/> Skip test
+      <h2>Vue</h2>
+      <span id="vue-output" class="output"></span>
+      <div id="vue-app">
+        <ul id="vue-list">
+          <li v-for="item in items" :key="item">{{item}}</li>
+        </ul>
       </div>
-      <span id="r-output" style="display:block; height: 25px;"></span>
+    </div>
+
+    <!-- react output -->
+    <div id="r-container" class="container">
+      <input id="r-skip" type="checkbox"/> Skip test
+      <h2>React</h2>
+      <span id="r-output" class="output"></span>
       <div id="r-app"></div>
+    </div>
+
+    <!-- preact output -->
+    <div id="p-container" class="container">
+      <input id="p-skip" type="checkbox"/> Skip test
+      <h2>Preact</h2>
+      <span id="p-output" class="output"></span>
+      <div id="p-app"></div>
+    </div>
+
+    <!-- virtual-dom output -->
+    <div id="vd-container" class="container">
+      <input id="vd-skip" type="checkbox"/> Skip test
+      <h2>virtual-dom (raw)</h2>
+      <span id="vd-output" class="output"></span>
+      <div id="vd-app"></div>
     </div>
 
     <script src="./lightning-dom.min.js"></script>
     <script src="https://unpkg.com/react@16.5.2/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@16.5.2/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/virtual-dom@2.1.1/dist/virtual-dom.js"></script>
+    <script src="https://npmcdn.com/preact@8.3.1/dist/preact.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
+
+    </script>
 
     <script>
       const app = lightningDOM.app()
@@ -73,18 +109,19 @@
       function average(arr) {
         let total = 0;
         arr.forEach(item => total += item)
-        return (total / arr.length) / 1000
+        const rawAvg = (total / arr.length) / 1000
+        return Math.round(rawAvg * 10000) / 10000
       }
 
-      function defer(fn) {
-        setTimeout(fn, 0)
+      function defer(fn, time) {
+        setTimeout(fn, time || 0)
       }
 
       let timesRan = 0
       let durations = []
       let currentTest = null
       function next() {
-        const fns = [goLightning, goReact]
+        const fns = [goLightning, goVue, goReact, goPreact, goVirtualDom]
 
         timesRan = 0
         durations = []
@@ -96,47 +133,76 @@
 
         const index = fns.indexOf(currentTest)
         currentTest = fns[index + 1] || null
-        if (index >= fns.length) return;
+        if (!currentTest) return;
         return currentTest()
       }
 
       document.querySelector('#go').addEventListener('click', () => {
         document.querySelector('#ld-output').innerHTML = ''
         document.querySelector('#r-output').innerHTML = ''
+        document.querySelector('#vd-output').innerHTML = ''
+        document.querySelector('#p-output').innerHTML = ''
+        document.querySelector('#vue-output').innerHTML = ''
         currentTest = null
         next()
       })
 
-      /**********************************
+      function end(beginStamp, outputNode, recurser) {
+        defer(() => {
+          const endStamp = performance.now()
+          timesRan += 1
+          durations.push(endStamp - beginStamp)
+          if (timesRan < ITERATIONS) {
+            outputNode.innerHTML = outputNode.innerHTML + '.'
+            recurser()
+          } else {
+            outputNode.innerHTML = `Average seconds: ${average(durations)}`
+            defer(next)
+          }
+        })
+      }
+
+      function populateOutput(outputNode) {
+        if (!outputNode.innerHTML.trim()) {
+          outputNode.innerHTML = 'Running...'
+        }
+      }
+
+      /*************************************************************************
       * Test functions after this point
-      **********************************/
+      *
+      * Each test function should...
+      * 1. create a begin timestamp ONLY when it's ready to do heavy lifting
+      * 3. clear any html left over from the previous test
+      * 4. select the element used for its text output on screen (output node)
+      * 5. select the element used for determining if the test should be skipped
+      * 6. call `return defer(next)` if the test should be skipped
+      * 7. call `populateOutput` with the output node
+      * 8. execute all library-specific dom stuff
+      *    - render an empty ul
+      *    - populate it with li's based on the `largeArr` variable
+      *    - repopulate it with li's based on the `smallArr` variable
+      *    - repopulate it again with li's based on the `largeArr` variable
+      * 9. when finished, call `end` with the begin timestamp, the output node,
+      *    and the test function for recursion purposes
+      *
+      * Once a test function has been written, add it to the `fns` array inside
+      * the `next` function and make sure it has corresponding markup written.
+      * Also make sure to clear the text from your associated output in the
+      * click handler for the go button.
+      *************************************************************************/
 
       // Test for lightningDOM
       function goLightning() {
         let beginStamp = null
         const output = document.querySelector('#ld-output')
 
+        document.querySelector('#ld-app').innerHTML = ''
+
         const skip = document.querySelector('#ld-skip')
         if (skip.checked) return defer(next)
 
-        function end() {
-          defer(() => {
-            const endStamp = performance.now()
-            timesRan += 1
-            durations.push(endStamp - beginStamp)
-            if (timesRan < ITERATIONS) {
-              output.innerHTML = output.innerHTML + '.'
-              goLightning()
-            } else {
-              output.innerHTML = `Average seconds: ${average(durations)}`
-              defer(next)
-            }
-          })
-        }
-
-        if (!output.innerHTML.trim()) {
-          output.innerHTML = 'Running...'
-        }
+        populateOutput(output)
 
         beginStamp = performance.now()
         const tree1 = create('ul')
@@ -152,10 +218,61 @@
         ])
         app.migrate(tree2, tree3)
 
-        const tree4 = create('ul', { onmount: end }, [
+        const tree4 = create('ul', { onmount: () => end(beginStamp, output, goLightning) }, [
           largeArr.map(item => create('li', { key: item+"" }, [item]))
         ])
         app.migrate(tree3, tree4)
+      }
+
+      // Test for Vue
+      function goVue() {
+        let beginStamp = null
+
+        document.querySelector('#vue-list').innerHTML = '<li v-for="item in items" :key="item">{{item}}</li>'
+
+        const output = document.querySelector('#vue-output')
+
+        const skip = document.querySelector('#vue-skip')
+        if (skip.checked) return defer(next)
+
+        populateOutput(output)
+
+        beginStamp = performance.now()
+
+        const app = new Vue({
+          el: '#vue-app',
+          data: {
+            items: []
+          }
+        })
+
+        // We use this technique because we want to make sure that each
+        // update actually gets handled in the update cycle. If we were to
+        // simply update the `items` var three times, one after the other,
+        // it would be synonymous to sending only the final update through
+        // the system and would not be representative of a plausible
+        // real life scenario.
+        Vue.nextTick(() => {
+          app.items = largeArr
+          Vue.nextTick(() => {
+            app.items = smallArr
+            Vue.nextTick(() => {
+              app.items = largeArr
+              Vue.nextTick(() => {
+                end(beginStamp, output, goVue)
+              })
+            })
+          })
+        })
+
+        // However, if you want to try it, just do this instead. It's definitely
+        // more performant!
+        //
+        // app.items = largeArr
+        // app.items = smallArr
+        // app.items = largeArr
+        // Vue.nextTick(() => end(beginStamp, output, goVue))
+
       }
 
       // Test for React
@@ -163,12 +280,14 @@
         let beginStamp = null
         const output = document.querySelector('#r-output')
 
+        // React's cleanup processes are complicated and async, however
+        // ReactDOM.render essentially handles this same process.
+        // document.querySelector('#r-app').innerHTML = ''
+
         const skip = document.querySelector('#r-skip')
         if (skip.checked) return defer(next)
 
-        if (!output.innerHTML.trim()) {
-          output.innerHTML = 'Running...'
-        }
+        populateOutput(output)
 
         class MyApp extends React.Component {
           constructor() {
@@ -181,30 +300,94 @@
             if (this.stage === 1) { this.setState({ lis: largeArr }) }
             if (this.stage === 2) { this.setState({ lis: smallArr }) }
             if (this.stage === 3) { this.setState({ lis: largeArr }) }
-            if (this.stage === 4) { defer(end) }
+            if (this.stage === 4) { defer(() => end(beginStamp, output, goReact)) }
             return React.createElement('ul', {}, [
               this.state.lis.map(item => React.createElement('li', { key: item+"" }, [item]))
             ])
           }
         }
 
-        function end() {
-          defer(() => {
-            const endStamp = performance.now()
-            timesRan += 1
-            durations.push(endStamp - beginStamp)
-            if (timesRan < ITERATIONS) {
-              output.innerHTML = output.innerHTML + '.'
-              goReact()
-            } else {
-              output.innerHTML = `Average seconds: ${average(durations)}`
-              defer(next)
-            }
-          })
+        beginStamp = performance.now()
+        ReactDOM.render(React.createElement(MyApp), document.querySelector('#r-app'))
+      }
+
+      // Test for Preact
+      function goPreact() {
+        let beginStamp = null
+        const output = document.querySelector('#p-output')
+
+        document.querySelector('#p-app').innerHTML = ''
+
+        const skip = document.querySelector('#p-skip')
+        if (skip.checked) return defer(next)
+
+        populateOutput(output)
+
+        class MyApp extends preact.Component {
+          constructor() {
+            super()
+            this.state = {lis: []}
+            this.stage = 0;
+          }
+          render() {
+            this.stage += 1
+            if (this.stage === 1) { this.setState({ lis: largeArr }) }
+            if (this.stage === 2) { this.setState({ lis: smallArr }) }
+            if (this.stage === 3) { this.setState({ lis: largeArr }) }
+            if (this.stage === 4) { defer(() => end(beginStamp, output, goPreact)) }
+            return preact.createElement('ul', {}, [
+              this.state.lis.map(item => preact.createElement('li', { key: item+"" }, [item]))
+            ])
+          }
         }
 
         beginStamp = performance.now()
-        ReactDOM.render(React.createElement(MyApp), document.querySelector('#r-app'))
+        preact.render(preact.createElement(MyApp), document.querySelector('#p-app'))
+      }
+
+      // Test for lightningDOM
+      function goVirtualDom() {
+        let beginStamp = null
+        const output = document.querySelector('#vd-output')
+
+        document.querySelector('#vd-app').innerHTML = ''
+
+        const skip = document.querySelector('#vd-skip')
+        if (skip.checked) return defer(next)
+
+        populateOutput(output)
+
+        const h = virtualDom.h
+        const create = virtualDom.create
+        const diff = virtualDom.diff
+        const patch = virtualDom.patch
+        const rootNode = document.querySelector('#vd-app')
+
+        beginStamp = performance.now()
+
+        let changes = null
+        const tree1 = h('ul')
+        rootNode.appendChild(create(tree1))
+
+        const tree2 = h('ul', {}, [
+          largeArr.map(item => h('li', { key: item+"" }, [item]))
+        ])
+        changes = diff(tree1, tree2)
+        patch(rootNode, changes)
+
+        const tree3 = h('ul', {}, [
+          smallArr.map(item => h('li', { key: item+"" }, [item]))
+        ])
+        changes = diff(tree2, tree3)
+        patch(rootNode, changes)
+
+        const tree4 = h('ul', {}, [
+          largeArr.map(item => h('li', { key: item+"" }, [item]))
+        ])
+        changes = diff(tree3, tree4)
+        patch(rootNode, changes)
+
+        end(beginStamp, output, goVirtualDom)
       }
 
     </script>
