@@ -60,6 +60,8 @@ vue v2.5.17          ■■■■■■■■■■■■■■■■■■■  
 virtual-dom v2.1.1   ■■■■■■■■■■■■■■■■■■■■■■■        2.2994 seconds
 preact v8.3.1        ■■■■■■■■■■■■■■■■■■■■■■■■       2.3788 seconds
 react v16.5.2        ■■■■■■■■■■■■■■■■■■■■■■■■■■■■   2.7914 seconds
+
+(Tests performed on Chrome 69, macOS 10.14, 2.7GHz Intel Core i5, 16 GB RAM)
 ```
 
 LightningDOM achieves its (theoretically) unmatched speed and efficiency by adhering to the following tenets. Some of these optimizations are micro and some are a little more macro:
