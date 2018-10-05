@@ -730,7 +730,7 @@
       renderTimer = setTimeout(function () {
 
         // If migrations have been queued up before this
-        // run loop began, there is no sense in rending the
+        // run loop began, there is no sense in rendering the
         // initial DOM state since it is no longer accurate.
         // Instead, we'll let the defer function take care of it.
         if (migration.length < 2) {

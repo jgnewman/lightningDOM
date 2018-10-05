@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>benchmark</title>
+  </head>
+  <body>
+    <h1>Benchmarks!</h1>
+    <p>This test requires Chrome 69 or higher.</p>
+    <p>We're going to render a bunch of elements, remove half of them and re-sort, then resort again while adding them back in.</p>
+    <div>
+      <button id="go">Run test</button>
+      <span id="output"></span>
+    </div>
+    <div id="app"></div>
+    <script src="./lightning-dom.min.js"></script>
+    <script>
+      const app = lightningDOM.app()
+      const create = lightningDOM.create
+
+      const largeArr = [];
+      const smallArr = [];
+      for (let i = 0; i < 10000; i += 1) {
+        largeArr.push(i)
+        i % 2 === 0 && smallArr[i % 3 === 0 ? 'unshift' : 'push'](i)
+      }
+
+      function average(arr) {
+        let total = 0;
+        arr.forEach(item => total += item)
+        return total / arr.length
+      }
+
+      let timesRan = 0;
+      let durations = [];
+      function go() {
+        const beginStamp = performance.now()
+
+        function end() {
+          setTimeout(() => {
+            const output = document.querySelector('#output')
+            const endStamp = performance.now()
+            timesRan += 1
+            durations.push(endStamp - beginStamp)
+            if (timesRan < 10) {
+              output.innerHTML = output.innerHTML + '.'
+              go()
+            } else {
+              output.innerHTML = `Average time: ${average(durations)}ms`
+            }
+          }, 0)
+        }
+
+        const tree1 = create('ul')
+        app.render(tree1, document.querySelector('#app'))
+
+        const tree2 = create('ul', null, [
+          largeArr.map(item => create('li', { key: item+"" }, [item]))
+        ])
+        app.migrate(tree1, tree2)
+
+        const tree3 = create('ul', null, [
+          smallArr.map(item => create('li', { key: item+"" }, [item]))
+        ])
+        app.migrate(tree2, tree3)
+
+        const tree4 = create('ul', { onmount: end }, [
+          largeArr.map(item => create('li', { key: item+"" }, [item]))
+        ])
+        app.migrate(tree3, tree4)
+      }
+
+      document.querySelector('#go').addEventListener('click', () => {
+        document.querySelector('#output').innerHTML = ''
+        timesRan = 0
+        durations = []
+        go()
+      })
+
+    </script>
+  </body>
+</html>

@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "test": "mocha",
-    "minify": "uglifyjs ./lightning-dom.js --compress --mangle --output ./lightning-dom-min.js"
+    "minify": "uglifyjs ./lightning-dom.js --compress --mangle --output ./lightning-dom.min.js"
   },
   "devDependencies": {
     "http-shutdown": "1.2.0",

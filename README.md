@@ -8,14 +8,13 @@ _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
 
 ## What is this thing and how do I use it?
 
-LightningDom provides an extremely simple API consisting of three main functions: `create`, `render`, and `migrate`. It allows you to build a tree of virtual nodes, render that tree into the real DOM, then diff your tree against another virtual tree and apply the changes, thus automatically updating the real DOM. It's exactly what you'd expect!
+LightningDom provides an extremely simple API consisting of three primary functions: `create`, `render`, and `migrate`. It allows you to build a tree of virtual nodes, render that tree into the real DOM, then diff your tree against another virtual tree and apply the changes, thus automatically updating the real DOM. It's exactly what you'd expect!
 
 Here's a quick example app:
 
 ```javascript
 import { create, app } from 'lightningDOM';
-
-const { render, migrate } = app();
+const myApp = app();
 
 // Generate a virtual DOM structure
 const vdom =
@@ -28,7 +27,7 @@ const vdom =
   ]);
 
 // Render the virtual DOM into the real DOM
-render(vdom, document.body);
+myApp.render(vdom, document.body);
 
 function rerender() {
 
@@ -41,19 +40,17 @@ function rerender() {
 
   // Find the differences between both versions and apply
   // those differences to the real DOM.
-  migrate(vdom, vdom2);
+  myApp.migrate(vdom, vdom2);
 }
 ```
 
-**Why does `create` exist at the top level but `render` and `migrate` only exist after calling the `app` function?**
+Because it's nice to be able to have multiple lightningDOM apps on one page if you need them, rendering and migrating and actions that happen at the app level. But since creating a virtual node is app-agnostic, the `create` function lives at the top level.
 
-Because every instance of `lightningDOM.app()` gives you an independent lightningDOM "app". Creating virtual nodes is kind of a global thing. But rendering them into a particular place on the page and updating that section of real DOM automatically is the job of a lightningDOM app. Organizing things this way way allows you to have many simultaneous lightningDOM apps running on the same page, completely independent of each other!
+# API
 
-Now let's talk about those functions.
+#### `create(String: tag [, Object: attributes, Array: children])`
 
-#### `create(String tag [, Object attributes, Array children])`
-
-This function builds a virtual DOM node which represents an HTML element. Your arguments tell it what kind of element it represents, what the attributes are for that element, and what its child nodes should be.
+Builds a virtual DOM node which represents an HTML element. Your arguments tell it what kind of element it represents, what the attributes are for that element, and what its child nodes should be.
 
 Attributes are named _exactly_ as they would be in real HTML. For example, you must use "class" instead of "className" (as opposed to other libraries like React DOM). Part of the reason lightningDOM is fast and small is that it doesn't waste time translating your attributes for you.
 
@@ -96,7 +93,7 @@ create('ul', {}, [
 ])
 ```
 
-#### `render(Node vdom, HtmlElement container)`
+#### `render(VNode: vdom, HtmlElement: container)`
 
 This function takes a virtual tree you have built and renders it into the real DOM in a target of your choosing.
 
@@ -111,7 +108,7 @@ Note that you can not "unrender" an app. Once it's bound to the DOM, it's there 
 
 Also note that manipulating the real DOM is an expensive operation. As such, render is asynchronous and will not block other scripts on your page _or other actions you take within your lightningDOM app_.
 
-#### `migrate(Node prev, Node next)`
+#### `migrate(VNode: prev, VNode: next)`
 
 This function migrates a previous version of the DOM to a new version. It does this by comparing the old virtual tree to a new virtual tree, gathering up a list of changes, and then applying those changes to the real DOM automatically for you.
 
