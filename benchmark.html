@@ -5,22 +5,39 @@
     <title>benchmark</title>
   </head>
   <body>
-    <h1>Benchmarks!</h1>
+    <h1>Informal Benchmarks!</h1>
     <p>This test requires Chrome 69 or higher.</p>
-    <p>We're going to render a bunch of elements, remove half of them and re-sort, then resort again while adding them back in.</p>
+    <p>We're going to render 10,000 elements, remove half of them and re-sort, then resort again while adding them back in.</p>
     <div>
       <button id="go">Run test</button>
-      <span id="output"></span>
     </div>
-    <div id="app"></div>
+
+    <div id="ld-container" style="float: left; width: 300px; padding: 10px; margin-top: 10px; background: #eaeaea;">
+      <h2>lightningDOM</h2>
+      <span id="ld-output" style="display:block; height: 25px;"></span>
+      <div id="ld-app"></div>
+    </div>
+
+    <div id="r-container" style="float: left; width: 300px; padding: 10px; margin-top: 10px; background: #fafafa;">
+      <h2>React</h2>
+      <span id="r-output" style="display:block; height: 25px;"></span>
+      <div id="r-app"></div>
+    </div>
+
     <script src="./lightning-dom.min.js"></script>
+    <script src="https://unpkg.com/react@16.5.2/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@16.5.2/umd/react-dom.production.min.js"></script>
+
     <script>
       const app = lightningDOM.app()
       const create = lightningDOM.create
 
+      const ITERATIONS = 10
+      const MAX_ITEMS = 10000
+
       const largeArr = [];
       const smallArr = [];
-      for (let i = 0; i < 10000; i += 1) {
+      for (let i = 0; i < MAX_ITEMS; i += 1) {
         largeArr.push(i)
         i % 2 === 0 && smallArr[i % 3 === 0 ? 'unshift' : 'push'](i)
       }
@@ -28,31 +45,44 @@
       function average(arr) {
         let total = 0;
         arr.forEach(item => total += item)
-        return total / arr.length
+        return (total / arr.length) / 1000
+      }
+
+      function defer(fn) {
+        setTimeout(fn, 0)
       }
 
       let timesRan = 0;
       let durations = [];
-      function go() {
-        const beginStamp = performance.now()
+
+      function goLightning() {
+        let beginStamp = null
+        const output = document.querySelector('#ld-output')
 
         function end() {
-          setTimeout(() => {
-            const output = document.querySelector('#output')
+          defer(() => {
             const endStamp = performance.now()
             timesRan += 1
             durations.push(endStamp - beginStamp)
-            if (timesRan < 10) {
+            if (timesRan < ITERATIONS) {
               output.innerHTML = output.innerHTML + '.'
-              go()
+              goLightning()
             } else {
-              output.innerHTML = `Average time: ${average(durations)}ms`
+              output.innerHTML = `Average seconds: ${average(durations)}`
+              timesRan = 0
+              durations = []
+              defer(goReact)
             }
-          }, 0)
+          })
         }
 
+        if (!output.innerHTML.trim()) {
+          output.innerHTML = 'Running...'
+        }
+
+        beginStamp = performance.now()
         const tree1 = create('ul')
-        app.render(tree1, document.querySelector('#app'))
+        app.render(tree1, document.querySelector('#ld-app'))
 
         const tree2 = create('ul', null, [
           largeArr.map(item => create('li', { key: item+"" }, [item]))
@@ -70,11 +100,59 @@
         app.migrate(tree3, tree4)
       }
 
+
+      function goReact() {
+        let beginStamp = null
+        const output = document.querySelector('#r-output')
+
+        class MyApp extends React.Component {
+          constructor() {
+            super()
+            this.state = {lis: []}
+            this.stage = 0;
+          }
+          render() {
+            this.stage += 1
+            if (this.stage === 1) { this.setState({ lis: largeArr }) }
+            if (this.stage === 2) { this.setState({ lis: smallArr }) }
+            if (this.stage === 3) { this.setState({ lis: largeArr }) }
+            if (this.stage === 4) { defer(end) }
+            return React.createElement('ul', {}, [
+              this.state.lis.map(item => React.createElement('li', { key: item+"" }, [item]))
+            ])
+          }
+        }
+
+        function end() {
+          defer(() => {
+            const endStamp = performance.now()
+            timesRan += 1
+            durations.push(endStamp - beginStamp)
+            if (timesRan < ITERATIONS) {
+              output.innerHTML = output.innerHTML + '.'
+              goReact()
+            } else {
+              output.innerHTML = `Average seconds: ${average(durations)}`
+              timesRan = 0
+              durations = []
+            }
+          })
+        }
+
+        if (!output.innerHTML.trim()) {
+          output.innerHTML = 'Running...'
+        }
+
+        beginStamp = performance.now()
+        ReactDOM.render(React.createElement(MyApp), document.querySelector('#r-app'))
+      }
+
       document.querySelector('#go').addEventListener('click', () => {
-        document.querySelector('#output').innerHTML = ''
+        document.querySelector('#ld-output').innerHTML = ''
+        document.querySelector('#r-output').innerHTML = ''
         timesRan = 0
         durations = []
-        go()
+        goLightning()
       })
 
     </script>
