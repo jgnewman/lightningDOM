@@ -10,6 +10,7 @@
 // - Keep virtual nodes as light as possible
 // - Avoid real DOM selection at all costs
 // - Don't translate attribute names (ex: use `class` not `className` for the class attr)
+// - Don't use regex
 // - Avoid having expensive operations be blocking
 // - Minimize expensive operations by batching where possible
 

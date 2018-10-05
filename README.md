@@ -8,7 +8,7 @@ _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
 
 ## What is this thing and how do I use it?
 
-LightningDom provides an extremely simple API consisting of three primary functions: `create`, `render`, and `migrate`. It allows you to build a tree of virtual nodes, render that tree into the real DOM, then diff your tree against another virtual tree and apply the changes, thus automatically updating the real DOM. It's exactly what you'd expect!
+LightningDOM provides an extremely simple API consisting of three primary functions: `create`, `render`, and `migrate`. It allows you to build a tree of virtual nodes, render that tree into the real DOM, then diff your tree against another virtual tree and apply the changes, thus automatically updating the real DOM. It's exactly what you'd expect!
 
 Here's a quick example app:
 
@@ -17,7 +17,7 @@ import { create, app } from 'lightningDOM';
 const myApp = app();
 
 // Generate a virtual DOM structure
-const vdom =
+const vdomVersion1 =
   create('div', { style: 'background: #eaeaea' }, [
     create('h1', { class: 'title' }, [ 'Hello, world!' ]),
     create('span', {}, [ 'This is a lightningDOM app.' ]),
@@ -27,12 +27,12 @@ const vdom =
   ]);
 
 // Render the virtual DOM into the real DOM
-myApp.render(vdom, document.body);
+myApp.render(vdomVersion1, document.body);
 
 function rerender() {
 
   // Generate a new version of the virtual DOM
-  const vdom2 =
+  const vdomVersion2 =
     create('div', { style: 'background: #eaeaea' }, [
       create('h1', { class: 'title' }, [ 'I have changed!' ]),
       create('span', {}, [ 'This is now a re-rendered lightningDOM app.' ])
@@ -40,11 +40,41 @@ function rerender() {
 
   // Find the differences between both versions and apply
   // those differences to the real DOM.
-  myApp.migrate(vdom, vdom2);
+  myApp.migrate(vdomVersion1, vdomVersion2);
 }
 ```
 
-Because it's nice to be able to have multiple lightningDOM apps on one page if you need them, rendering and migrating and actions that happen at the app level. But since creating a virtual node is app-agnostic, the `create` function lives at the top level.
+Because it's nice to be able to have multiple lightningDOM apps on one page if you need them, rendering and migrating are actions that happen at the app level. But since creating a virtual node is app-agnostic, the `create` function lives at the top level.
+
+## A Note on Speed and Efficiency
+
+If you would like to see how lightningDOM measures up to some popular frameworks and alternatives, you can spin up this repo in a simple web server and view the `benchmark.html` file. It's an informal benchmark, but it's insightful nonetheless.
+
+The place where DOM manipulation really gets tricky is when you are dealing with lots of elements, and especially long lists of elements. Adding or removing list items, or performing trickier manipulations like reordering them will require a lot of DOM crawling and live node analyzing if you don't use a virtual DOM, and will likely end up doing a LOT of unnecessary rendering if you don't have smart algorithms. Since this is kind of the heart of DOM diffing, the benchmark goes through a bunch of iterations of the following: 1) spinning up an app from scratch, 2) rendering an initial list of 10,000 items, 3) removing half of them and re-sorting the list, then 4) adding the removed items back in and re-sorting again.
+
+Again, these are _informal_ benchmarks, but here are the average times it took for some common libraries to perform this task (smaller is better):
+
+```
+lightningDOM v0.0.1  ■■■■■■■                        0.6518 seconds
+vue v2.5.17          ■■■■■■■■■■■■■■■■■■■            1.8992 seconds
+virtual-dom v2.1.1   ■■■■■■■■■■■■■■■■■■■■■■■        2.2994 seconds
+preact v8.3.1        ■■■■■■■■■■■■■■■■■■■■■■■■       2.3788 seconds
+react v16.5.2        ■■■■■■■■■■■■■■■■■■■■■■■■■■■■   2.7914 seconds
+```
+
+LightningDOM achieves its (theoretically) unmatched speed and efficiency by adhering to the following tenets. Some of these optimizations are micro and some are a little more macro:
+
+- Keeping the code base as small as possible
+- Using only ES3/4 features to avoid transpilation bloat and slower-but-convenient language features
+- Making wise decisions about when to use arrays vs objects based on what kind of iterations are needed and keeping in mind native runtime optimizations
+- Minimizing the amount of function calls made in a given run loop
+- Minimizing the amount of conditional statements used
+- Keeping virtual node instances as light as possibile
+- Avoiding real DOM crawling and node selection at all costs
+- Avoiding regex at all costs
+- Avoiding unnecessary transformations (such as translating "className" on the vnode to "class" on the real node)
+- Batching expensive operations
+- Making expensive operations asynchronous (non-blocking)
 
 # API
 
@@ -158,12 +188,6 @@ To illustrate...
 
 Part of what makes lightningDOM fast and efficient is that it does this for you.
 
-Of course, when you create your own apps, you probably won't do anything as weird as what's shown in the example. However it is possible that you could do things that trigger multiple changes within a single run loop, which would produce essentially the same effect. If that happens, we'll still have to build new versions of the virtual DOM for every update, so you don't have to worry about things not getting done that you expected to get done. But we don't have to diff and migrate the actual state of the real DOM for every one. LightningDom will jump right to the end of that chain without wasting time in between.
+Of course, when you create your own apps, you probably won't do anything as weird as what's shown in the example. However it is possible that you could do things that trigger multiple changes within a single run loop, which would produce essentially the same effect. If that happens, we'll still have to build new versions of the virtual DOM for every update, so you don't have to worry about things not getting done that you expected to get done. But we don't have to diff and migrate the actual state of the real DOM for every one. LightningDOM will jump right to the end of that chain without wasting time in between.
 
 There is one caveat to all of this. If you create an `onmount` function for a node that is added and then removed within the same run loop, that function will never run. Why? Because it's a waste of time to immediately add and then remove a node from the DOM without giving the user a chance to even see it, much less do anything with it. The same goes for `onunmount`, so make sure to keep this in mind when working with these events.
-
-## So how does it measure up against other virtual DOMs?
-
-As of today, I'm not sure. We can tell it's small and it certainly _feels_ fast but official benchmarks are still to come.
-
-For now, I can tell you that it renders an initial 10,000 items in the blink of an eye. You can delete all the odd numbered items in just over 1s, and you can put them all back a little more quickly. It's pretty dang good. (Tests performed on Vivaldi 1.14, Ubuntu 17.10, Intel Core i7, 16GB ram)
