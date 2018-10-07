@@ -55,11 +55,11 @@ The place where DOM manipulation really gets tricky is when you are dealing with
 Again, these are _informal_ benchmarks, but here are the average times it took for some common libraries to perform this task (smaller is better):
 
 ```
-lightningDOM v0.0.1   0.5865 seconds   ■■■■■■
-vue v2.5.17           1.6914 seconds   ■■■■■■■■■■■■■■■■■
-react v16.5.2         2.4667 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■
-preact v8.3.1         2.3018 seconds   ■■■■■■■■■■■■■■■■■■■■■■■
-virtual-dom v2.1.1    2.1850 seconds   ■■■■■■■■■■■■■■■■■■■■■■
+lightningDOM v0.0.1   0.5969 seconds   ■■■■■■
+vue v2.5.17           1.2807 seconds   ■■■■■■■■■■■■■
+react v16.5.2         2.0562 seconds   ■■■■■■■■■■■■■■■■■■■■■
+preact v8.3.1         1.8245 seconds   ■■■■■■■■■■■■■■■■■■
+virtual-dom v2.1.1    1.5836 seconds   ■■■■■■■■■■■■■■■■
 
 (Tests performed on Chrome 69, macOS 10.14, 2.7GHz Intel Core i5, 16 GB RAM)
 ```

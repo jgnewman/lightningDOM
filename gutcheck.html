@@ -16,10 +16,13 @@ window.migrate = app.migrate;
 window.addEventListener('load', () => {
 
 var initArr = [];
+var newArr = [];
 for (var i = 0; i < 10000; i += 1) {
   initArr.push(i);
+  if (i % 2 !== 0) {
+    newArr[i % 3 === 0 ? 'unshift' : 'push'](i);
+  }
 }
-var newArr = initArr.filter(item => item % 2 === 0);
 
 // Before smart sort we're looking at about 1.5 seconds to remove them
 // and about 6s to put them back. If smart sort is good, our target is
