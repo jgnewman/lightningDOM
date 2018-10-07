@@ -383,10 +383,6 @@
 
           // If the index of the match is less than the last index of a match then
           // we know matches have been reordered.
-          if (j < lastMatchIndex) {
-            matchesAreInOrder && (matchesAreInOrder = false);
-            reorders[prevChild]
-          }
           if (matchesAreInOrder && j < lastMatchIndex) {
             matchesAreInOrder = false
           }
@@ -594,7 +590,7 @@
     // be reordered in the DOM.
     function shouldReorderItem(item, isLast, additionsToCome, change) {
       var prevChildren = change.prev.children;
-      var movedToLast = isLast && prevChildren[prevChildren - 1].key === item.key;
+      var movedToLast = isLast && prevChildren[prevChildren.length - 1].key === item.key;
       var indexes = change.data.matches[item.key];
       var indexDiff = indexes[1] - indexes[0];
       var indexIncreased = indexDiff > 0;

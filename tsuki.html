@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>test</title>
+</head>
+<body>
+<script src="./lightning-dom.js"></script>
+<script src="./tsuki.js"></script>
+<script>
+  const Component = new Tsuki({
+    onclick(evt, props) {
+      console.log('clicked and got', evt, props)
+      props.run('UPDATE_PROP1', 'A new value came through!')
+    },
+
+    view(props) {
+      return T.div`class=component` (
+        props.prop1,
+        T.button`class=my-button onclick=${T.inject(props)(this.onclick)}` ('Button text'),
+      )
+    }
+  })
+
+  const App = new Tsuki({
+    el: 'body',
+
+    onclick(evt) {
+      console.log(evt)
+    },
+
+    init() {
+      return {
+        prop1: 'I got passed through!'
+      }
+    },
+
+    rules() {
+      return {
+        UPDATE_PROP1: newVal => state => ({ ...state, prop1: newVal })
+      }
+    },
+
+    view(props) {
+      return (
+        T.ul`class=list-items onclick=${this.onclick}` (
+          Component.use`prop1=${props.prop1} run=${props.run}`,
+          T.li`class=list-item` ('Hello, how are you?'),
+          T.li`class=list-item` ('Fine, how are you?'),
+        )
+      )
+    }
+  })
+</script>
+</body>
+</html>

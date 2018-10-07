@@ -47,6 +47,14 @@
       <div id="ld-app"></div>
     </div>
 
+    <!-- tsuki output -->
+    <div id="t-container" class="container">
+      <input id="t-skip" type="checkbox"/> Skip test
+      <h2>Tsuki</h2>
+      <span id="t-output" class="output"></span>
+      <div id="t-app"></div>
+    </div>
+
     <!-- vue output -->
     <div id="vue-container" class="container">
       <input id="vue-skip" type="checkbox"/> Skip test
@@ -83,7 +91,8 @@
       <div id="vd-app"></div>
     </div>
 
-    <script src="./lightning-dom.min.js"></script>
+    <script src="./lightning-dom.js"></script>
+    <script src="./tsuki.js"></script>
     <script src="https://unpkg.com/react@16.5.2/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@16.5.2/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/virtual-dom@2.1.1/dist/virtual-dom.js"></script>
@@ -121,7 +130,7 @@
       let durations = []
       let currentTest = null
       function next() {
-        const fns = [goLightning, goVue, goReact, goPreact, goVirtualDom]
+        const fns = [goLightning, goTsuki, goVue, goReact, goPreact, goVirtualDom]
 
         timesRan = 0
         durations = []
@@ -139,6 +148,7 @@
 
       document.querySelector('#go').addEventListener('click', () => {
         document.querySelector('#ld-output').innerHTML = ''
+        document.querySelector('#t-output').innerHTML = ''
         document.querySelector('#r-output').innerHTML = ''
         document.querySelector('#vd-output').innerHTML = ''
         document.querySelector('#p-output').innerHTML = ''
@@ -222,6 +232,57 @@
           largeArr.map(item => create('li', { key: item+"" }, [item]))
         ])
         app.migrate(tree3, tree4)
+      }
+
+      // Test for Tsuki
+      function goTsuki() {
+        let beginStamp = null
+        const output = document.querySelector('#t-output')
+
+        document.querySelector('#t-app').innerHTML = ''
+
+        const skip = document.querySelector('#t-skip')
+        if (skip.checked) return defer(next)
+
+        populateOutput(output)
+
+        beginStamp = performance.now()
+
+        new Tsuki({
+          el: '#t-app',
+
+          init() {
+            return {
+              items: [],
+              stage: 1
+            }
+          },
+
+          rules() {
+            return {
+              UPDATE_ITEMS: newItems => state => {
+                return { ...state, stage: state.stage + 1, items: newItems }
+              }
+            }
+          },
+
+          onMount(props) {
+            if (props.stage === 4) {
+              end(beginStamp, output, goTsuki)
+            }
+          },
+
+          view(props) {
+            if (props.stage === 1) setTimeout(() => props.run('UPDATE_ITEMS', largeArr), 1000)
+            if (props.stage === 2) setTimeout(() => props.run('UPDATE_ITEMS', smallArr), 1000)
+            if (props.stage === 3) setTimeout(() => props.run('UPDATE_ITEMS', largeArr), 1000)
+
+            return T.ul`onmount=${T.inject(props)(this.onMount)}` (
+              props.items.map(item => T.li`key=${item+""}`(item))
+            )
+          }
+        })
+
       }
 
       // Test for Vue
