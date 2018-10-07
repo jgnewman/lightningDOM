@@ -590,16 +590,11 @@
     // be reordered in the DOM.
     function shouldReorderItem(vnode, isLastInNextList, additionsToCome, change) {
       var prevChildren = change.prev.children;
-<<<<<<< HEAD
-      var movedToLast = isLast && prevChildren[prevChildren.length - 1].key === item.key;
-      var indexes = change.data.matches[item.key];
-=======
       var movedToLast = isLastInNextList && prevChildren[prevChildren.length - 1].key !== vnode.key;
 
       if (movedToLast) return true;
 
       var indexes = change.data.matches[vnode.key];
->>>>>>> master
       var indexDiff = indexes[1] - indexes[0];
       var indexChanged = indexDiff !== 0;
 
