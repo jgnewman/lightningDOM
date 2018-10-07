@@ -588,20 +588,29 @@
 
     // Sort helper to determine whether or not an item in a keylist should
     // be reordered in the DOM.
-    function shouldReorderItem(item, isLast, additionsToCome, change) {
+    function shouldReorderItem(vnode, isLastInNextList, additionsToCome, change) {
       var prevChildren = change.prev.children;
+<<<<<<< HEAD
       var movedToLast = isLast && prevChildren[prevChildren.length - 1].key === item.key;
       var indexes = change.data.matches[item.key];
-      var indexDiff = indexes[1] - indexes[0];
-      var indexIncreased = indexDiff > 0;
+=======
+      var movedToLast = isLastInNextList && prevChildren[prevChildren.length - 1].key !== vnode.key;
 
-      return movedToLast ||
-        (!isLast &&
-          indexIncreased &&
-            indexDiff !== (additionsToCome - getRemovalsToCome(
-              change.data.removalIndexes,
-              indexes[0]
-            )));
+      if (movedToLast) return true;
+
+      var indexes = change.data.matches[vnode.key];
+>>>>>>> master
+      var indexDiff = indexes[1] - indexes[0];
+      var indexChanged = indexDiff !== 0;
+
+      if (!isLastInNextList && indexChanged) {
+        var removalsToCome = getRemovalsToCome(change.data.removalIndexes, indexes[0])
+        if (indexDiff !== additionsToCome - removalsToCome) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     // This function should only be called in relation to keylist nodes.
@@ -628,33 +637,33 @@
 
       // Loop backward over the new list of children.
       for (var i = looplen; i >= 0; i -= 1) {
-        var item = totalItems[i];
+        var vnode = totalItems[i];
 
         // If the child exists in the matches object, it can't exist in
         // the additions object. We need to see whether we should move it
         // from where it currently sits in the DOM to before the last item
         // we handled (since we're looping backward).
-        if (matches.hasOwnProperty(item.key)) {
-          var indexes = matches[item.key];
+        if (matches.hasOwnProperty(vnode.key)) {
+          var indexes = matches[vnode.key];
           var isLast = i === looplen;
 
-          // The item should be reordered if it has moved into last position OR
+          // The vnode should be reordered if it has moved into last position OR
           // if it's not last and its new index is greater than its old index
           // and the difference between its indexes does not equal the amount
-          // of items still to add minus the amount of items behind it to
+          // of vnodes still to add minus the amount of vnodes behind it to
           // be removed.
-          if (shouldReorderItem(item, isLast, additionsToCome, change)) {
+          if (shouldReorderItem(vnode, isLast, additionsToCome, change)) {
             var sibling = totalItems[i + 1];
-            parentNode.insertBefore(item.node, sibling ? sibling.node : null);
+            parentNode.insertBefore(vnode.node, sibling ? sibling.node : null);
           }
 
         // If the child exists in the additions object, then we know we
-        // need to build it now and insert it before the previous item we
+        // need to build it now and insert it before the previous vnode we
         // dealt with (since we're looping backward).
-        } else if (additions.hasOwnProperty(item.key)) {
+        } else if (additions.hasOwnProperty(vnode.key)) {
           var sibling = totalItems[i + 1];
-          parentNode.insertBefore(item.build(), sibling ? sibling.node : null);
-          collectTasks('onmount', item);
+          parentNode.insertBefore(vnode.build(), sibling ? sibling.node : null);
+          collectTasks('onmount', vnode);
           additionsToCome -= 1;
         }
       }
