@@ -811,7 +811,7 @@
   }
 
   // Inject a global into window if it exists.
-  if (typeof window !== 'undefined') {
+  else if (typeof window !== 'undefined') {
     window.lightningDOM = out;
   }
 

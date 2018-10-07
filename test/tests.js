@@ -266,10 +266,10 @@ describe('lightningDOM', function () {
 
       return new Promise(resolve => {
         setTimeout(() => {
-          assert.ok(error instanceof Error)
-          assert.ok(/iteration.+key/.test(error.message))
+          assert.ok(error instanceof Error, 'Got an error')
+          assert.ok(/iteration.+key/.test(error.message), 'Error complains about key')
           resolve()
-        }, 10)
+        }, 100)
       })
     })
 
