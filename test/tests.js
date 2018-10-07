@@ -6,7 +6,7 @@ const fs = require('fs')
 require('http-shutdown').extend()
 
 const PORT = 8080
-const HTML = fs.readFileSync(path.resolve(`${__dirname}/../test.html`))
+const HTML = fs.readFileSync(path.resolve(`${__dirname}/test.html`))
 const JS   = fs.readFileSync(path.resolve(`${__dirname}/../lightning-dom.js`))
 
 function createServer() {
