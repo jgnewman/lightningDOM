@@ -251,6 +251,12 @@
         new Tsuki({
           el: '#t-app',
 
+          rules: {
+            updateItems: newItems => state => {
+              return { ...state, stage: state.stage + 1, items: newItems }
+            }
+          },
+
           init() {
             return {
               items: [],
@@ -258,23 +264,14 @@
             }
           },
 
-          rules() {
-            return {
-              UPDATE_ITEMS: newItems => state => {
-                return { ...state, stage: state.stage + 1, items: newItems }
-              }
-            }
-          },
-
-
-          view(props) {
-            if (props.stage === 1) props.run('UPDATE_ITEMS', largeArr)
-            if (props.stage === 2) props.run('UPDATE_ITEMS', smallArr)
-            if (props.stage === 3) props.run('UPDATE_ITEMS', largeArr)
-            if (props.stage === 4) defer(() => end(beginStamp, output, goTsuki))
+          view() {
+            if (this.props.stage === 1) this.rules.updateItems(largeArr)
+            if (this.props.stage === 2) this.rules.updateItems(smallArr)
+            if (this.props.stage === 3) this.rules.updateItems(largeArr)
+            if (this.props.stage === 4) defer(() => end(beginStamp, output, goTsuki))
 
             return T.ul`` (
-              props.items.map(item => T.li`key=${item+""}`(item))
+              this.props.items.map(item => T.li`key=${item+""}`(item))
             )
           }
         })

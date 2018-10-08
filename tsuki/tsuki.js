@@ -19,17 +19,23 @@
 
   function buildAttrsFromTemplate(strings, vars) {
     const output = {}
+
     strings.forEach((str, idx) => {
+      str = str.trim();
       if (!str) return;
-      const attrs = str.trim().replace(/\s{2,}/g, ' ').split(' ')
+
+      const attrs = str.replace(/\s{2,}/g, ' ').split(' ')
       attrs.forEach(attr => {
         const keyVal = attr.split('=')
+
         if (attr[attr.length - 1] === '=') {
           keyVal[1] = vars[idx]
         }
+
         output[keyVal[0]] = keyVal[1]
       })
     })
+
     return output
   }
 
@@ -63,47 +69,78 @@
   class Tsuki {
 
     constructor(options) {
-      this.options = options
+      this._options = options
+      this._store = null
+      this._runner = null
+      this._tree = null
+      this.props = {}
+      this.refs = {}
 
-      if (options.el) {
+      Object.keys(options).forEach(key => {
+        const optionValue = options[key]
+        if (typeof optionValue === 'function') {
+          this[key] = optionValue.bind(this)
+        } else {
+          this[key] = options[key]
+        }
+      })
+
+      const initialView = this.view
+      this.view = (props) => {
+        this.props = props
+        return initialView(props)
+      }
+
+      if (this.el) {
         const app = lightningDOM.app()
-        const target = document.querySelector(options.el)
+        const target = document.querySelector(this.el)
         let hasRendered = false
 
-        this.rules = options.rules && options.rules()
+        this._store = new Store(newState => {
 
-        const runner = (ruleName, data) => this.store.run(ruleName, data)
-        this.store = new Store(newState => {
-
-          if (this.rules) {
-            newState.run = runner
-          }
-
-          const newTree = options.view(newState || {})
+          this.props = newState || {}
+          const newTree = this.view(this.props)
 
           if (hasRendered) {
-            app.migrate(this.tree, newTree)
+            app.migrate(this._tree, newTree)
           } else {
             app.render(newTree, target)
             hasRendered = true
           }
 
-          this.tree = newTree
+          this._tree = newTree
         })
 
-        this.store.addRule('_INIT', initialData => _ => initialData)
-        this.rules && Object.keys(this.rules).forEach(name => this.store.addRule(name, this.rules[name]))
-        options.init && this.store.run('_INIT', options.init())
+        this._store.addRule('_INIT', initialData => {
+          return _ => initialData
+        })
+
+        if (this.rules) {
+          Object.keys(this.rules).forEach(ruleName => {
+            this._store.addRule(ruleName, this.rules[ruleName])
+            this.rules[ruleName] = data => this._store.run(ruleName, data)
+          })
+        }
+
+        this.init && this._store.run('_INIT', this.init())
       }
     }
 
 
     use(strings, ...vars) {
       const props = buildAttrsFromTemplate(strings, vars)
-      return this.options.view(props)
+      this.props = props
+      return this.view(props)
     }
 
-    static inject(...toInject) {
+    capture(name, vnode) {
+      this.refs[name] = () => vnode && vnode.node ? vnode.node : null
+      return vnode
+    }
+
+    // this.inject(someData)(this.someFunction)
+    // ...Calls this.someFunction with its normal args + someData as an extra arg at the end
+    inject(...toInject) {
       return (fn) => (...args) => fn(...args.concat(toInject))
     }
 
@@ -116,7 +153,9 @@
 
   }
 
-  RECOGNIZED_NODES.forEach(node => Tsuki[node] = (strings, ...vars) => Tsuki._(node, strings, vars))
+  RECOGNIZED_NODES.forEach(node => {
+    Tsuki[node] = (strings, ...vars) => Tsuki._(node, strings, vars)
+  })
 
   // Create module.exports if they exist
   if (typeof module !== 'undefined') {

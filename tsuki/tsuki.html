@@ -11,15 +11,20 @@
 
   const MyComponent = new Tsuki({
 
-    onclick(evt, props) {
-      console.log('clicked and got', evt, props)
-      props.run('UPDATE_PROP1', 'A new value came through!')
+    onclick() {
+      console.log('clicked and got', this.props, this.refs.myButton())
+      this.props.updateProp1('A new value came through!')
     },
 
-    view(props) {
+    view() {
       return T.div`class=component` (
-        props.prop1,
-        T.button`class=my-button onclick=${T.inject(props)(this.onclick)}` ('Button text'),
+        this.props.prop1,
+        this.capture('myButton',
+          T.button`
+            class=my-button
+            onclick=${this.onclick}
+          ` ('Button text')
+        ),
       )
     }
 
@@ -28,8 +33,8 @@
   const App = new Tsuki({
     el: 'body',
 
-    onclick(evt) {
-      console.log(evt)
+    rules: {
+      updateProp1: newVal => state => ({ ...state, prop1: newVal })
     },
 
     init() {
@@ -38,16 +43,17 @@
       }
     },
 
-    rules() {
-      return {
-        UPDATE_PROP1: newVal => state => ({ ...state, prop1: newVal })
-      }
+    onclick(evt) {
+      console.log(evt)
     },
 
-    view(props) {
+    view() {
       return (
         T.ul`class=list-items onclick=${this.onclick}` (
-          MyComponent.use`prop1=${props.prop1} run=${props.run}`,
+          MyComponent.use`
+            prop1=${this.props.prop1}
+            updateProp1=${this.rules.updateProp1}
+          `,
           T.li`class=list-item` ('Hello, how are you?'),
           T.li`class=list-item` ('Fine, how are you?'),
         )
