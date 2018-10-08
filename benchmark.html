@@ -92,7 +92,7 @@
     </div>
 
     <script src="./lightning-dom.js"></script>
-    <script src="./tsuki.js"></script>
+    <script src="./tsuki/tsuki.js"></script>
     <script src="https://unpkg.com/react@16.5.2/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@16.5.2/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/virtual-dom@2.1.1/dist/virtual-dom.js"></script>
@@ -266,18 +266,14 @@
             }
           },
 
-          onMount(props) {
-            if (props.stage === 4) {
-              end(beginStamp, output, goTsuki)
-            }
-          },
 
           view(props) {
-            if (props.stage === 1) setTimeout(() => props.run('UPDATE_ITEMS', largeArr), 1000)
-            if (props.stage === 2) setTimeout(() => props.run('UPDATE_ITEMS', smallArr), 1000)
-            if (props.stage === 3) setTimeout(() => props.run('UPDATE_ITEMS', largeArr), 1000)
+            if (props.stage === 1) props.run('UPDATE_ITEMS', largeArr)
+            if (props.stage === 2) props.run('UPDATE_ITEMS', smallArr)
+            if (props.stage === 3) props.run('UPDATE_ITEMS', largeArr)
+            if (props.stage === 4) defer(() => end(beginStamp, output, goTsuki))
 
-            return T.ul`onmount=${T.inject(props)(this.onMount)}` (
+            return T.ul`` (
               props.items.map(item => T.li`key=${item+""}`(item))
             )
           }

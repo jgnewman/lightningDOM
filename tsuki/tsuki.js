@@ -52,7 +52,6 @@
         const newState = transformer(this.state)
         this.state = newState
         this.observer(newState)
-        //console.log('Ran', ruleName, 'with', data, 'and got', newState)
       }, 0)
     }
 
