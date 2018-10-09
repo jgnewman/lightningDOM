@@ -6,7 +6,7 @@
   "author": "john <rescuecreative@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "mocha test/*.test.js",
+    "test": "mocha test/*.test.js --timeout 10000",
     "minify": "uglifyjs ./lightning-dom.js --compress --mangle --output ./lightning-dom.min.js"
   },
   "devDependencies": {
