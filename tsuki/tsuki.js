@@ -125,6 +125,10 @@
         const stateThunk = rule(data)
         const statePromise = stateThunk instanceof Promise ? stateThunk : Promise.resolve(stateThunk)
 
+        // We deliberately don't catch errors here because, if this wasn't a
+        // promise it would have already errored, and if it was, we want to put
+        // the onus on the user to handle their own promise errors and return
+        // a new state when an error occurs.
         statePromise.then(stateBuilder => {
           const newState = stateBuilder(this.state)
           this.state = newState
