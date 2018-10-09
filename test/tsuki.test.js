@@ -3,7 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const Browser = require('./utils/spawn-browser')
 
-const SERVER_PORT = 8081
+const SERVER_PORT = 8080
 const SERVER_ROUTES = [
   {
     test: /lightning-dom\.js/,
@@ -28,8 +28,8 @@ describe('Tsuki', function () {
     })
   })
 
-  after(function () {
-    this.browser.closeBrowser()
+  after(async function () {
+    await this.browser.closeBrowser()
   })
 
   beforeEach(async function () {

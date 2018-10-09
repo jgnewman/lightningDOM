@@ -24,8 +24,8 @@ describe('lightningDOM', function () {
     })
   })
 
-  after(function () {
-    this.browser.closeBrowser()
+  after(async function () {
+    await this.browser.closeBrowser()
   })
 
   beforeEach(async function () {
