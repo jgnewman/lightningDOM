@@ -29,13 +29,9 @@ Tsuki means "moon" in Japanese. The inspiration for the name came after my young
 Like this:
 
 ```javascript
-const markup = () => {
-  return T.div`class=app` ("Hello, world!")
-}
-
 new Tsuki({
   el: '#my-app-container',
-  view: markup
+  view: () => T.div`class=app` ("Hello, world!")
 })
 ```
 
