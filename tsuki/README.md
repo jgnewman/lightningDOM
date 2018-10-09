@@ -1,5 +1,7 @@
 ![Tsuki](https://raw.githubusercontent.com/jgnewman/lightningDOM/master/tsuki/tsuki-logo.png)
 
+![Travis Build](https://travis-ci.org/jgnewman/lightningDOM.svg?branch=master)
+
 Tsuki is a composable component framework built on top of LightningDOM. Currently it's more of an experiment than a ready-for-use tool, but it serves to give a little more credence to LightningDOM's benchmarks.
 
 When trying to show how virtual DOMs stack up against each other, it can be tough to get your hands on raw copies of the core virtual DOM implementations that live _inside_ larger frameworks like React and Vue. Plus, in real life, people aren't using those raw implementations, they're using the larger frameworks.
