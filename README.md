@@ -64,6 +64,8 @@ virtual-dom v2.1.1    1.5836 seconds   ■■■■■■■■■■■■■�
 (Tests performed on Chrome 69, macOS 10.14, 2.7GHz Intel Core i5, 16 GB RAM)
 ```
 
+> If you would like see how LightningDOM performs with a more feature-rich framework wrapped around it, check out **Tsuki** in this repo.
+
 LightningDOM achieves its (theoretically) unmatched speed and efficiency by adhering to the following tenets. Some of these optimizations are micro and some are a little more macro:
 
 - Keeping the code base as small as possible

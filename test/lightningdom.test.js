@@ -1,80 +1,31 @@
 const assert = require('assert')
-const puppeteer = require('puppeteer')
 const path = require('path')
-const http = require('http')
 const fs = require('fs')
-require('http-shutdown').extend()
+const Browser = require('./utils/spawn-browser')
 
-const PORT = 8080
-const HTML = fs.readFileSync(path.resolve(`${__dirname}/test.html`))
-const JS   = fs.readFileSync(path.resolve(`${__dirname}/../lightning-dom.js`))
-
-function createServer() {
-  const reqHandler = (req, res) => {
-    res.writeHead(200)
-    res.end(/lightning-dom/.test(req.url) ? JS : HTML)
-  }
-  const server = http.createServer(reqHandler).withShutdown()
-  server.listen(PORT)
-  return server
-}
-
-class Browser {
-
-  constructor() {
-    this.browser = null
-  }
-
-  async getBrowser() {
-    let browser;
-
-    if (!this.browser) {
-      browser = await puppeteer.launch()
-    }
-
-    // If we had a race condition on two processes creating a browser,
-    // close the one we don't need
-    if (browser && this.browser) {
-      await browser.close()
-
-    // If this was the first process to finish, set the browser
-    } else if (!this.browser) {
-      this.browser = browser
-    }
-
-    return this.browser
-  }
-
-  async _getRawPage() {
-    const browser = await this.getBrowser()
-    const page = await browser.newPage()
-    return page
-  }
-
-  async closeBrowser() {
-    const browser = await this.getBrowser()
-    const pages = await browser.pages()
-    await Promise.all(pages.map(async page => await page.close()))
-    await browser.close()
-  }
-
-  async getPage() {
-    const page = await this._getRawPage()
-    await page.goto(`http://localhost:${PORT}`, {waitUntil: `networkidle0`})
-    return page
-  }
-}
+const SERVER_PORT = 8080
+const SERVER_ROUTES = [
+  {
+    test: /lightning-dom\.js/,
+    file: fs.readFileSync(path.resolve(`${__dirname}/../lightning-dom.js`))
+  },
+  {
+    test: null,
+    file: fs.readFileSync(path.resolve(__dirname, './templates/test-lightningdom.html'))
+  },
+]
 
 describe('lightningDOM', function () {
 
   before(function () {
-    this.server = createServer()
-    this.browser = new Browser()
+    this.browser = new Browser({
+      port: SERVER_PORT,
+      routes: SERVER_ROUTES
+    })
   })
 
   after(function () {
     this.browser.closeBrowser()
-    this.server.shutdown()
   })
 
   beforeEach(async function () {

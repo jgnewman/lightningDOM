@@ -49,6 +49,31 @@
     }
   }
 
+  // Determines whether an object matches a group of options
+  function isMatch(obj, options, keys) {
+    let objMatches = true;
+    keys.some(key => {
+      if (obj[key] !== options[key]) {
+        objMatches = false;
+        return true;
+      }
+    });
+    return objMatches;
+  }
+
+  // Finds the first object in an array matching a group of options
+  function findMatchFor(options, inArray) {
+    let match;
+    const keys = Object.keys(options);
+    inArray.some((item, index) => {
+      if (isMatch(item, options, keys)) {
+        match = {item: item, index: index};
+        return true;
+      }
+    })
+    return match || {item: undefined, index: -1};
+  }
+
   // Every app begins with a `new Tsuki`
   class Tsuki {
     constructor({ el, view, init, rules }) {
@@ -66,7 +91,14 @@
 
     // Do the initial render if we haven't done it yet. Migrate if we have.
     phase(newState) {
-      const newTree = this.view(newState, this.state.getRules())
+      let newTree = this.view(newState, this.state.getRules())
+
+      // Allow a view function that doesn't contain nested children like...
+      // view: () => T.div`class=foo`
+      if (typeof newTree === 'function') {
+        newTree = newTree()
+      }
+
       if (!this.isRendered) {
         this.app.render(newTree, this.el)
         this.tree = newTree
@@ -80,6 +112,62 @@
     // Builds a function that takes extra arguments as specified by `toInject`
     static inject(fn, ...toInject) {
       return (...nativeArgs) => fn(...nativeArgs.concat(toInject))
+    }
+
+    // After this point, a bunch of static utils for handling arrays and
+    // especially arrays of objects. Super useful for making state updates
+
+    static firstItem(arr) {
+      return arr[0]
+    }
+
+    static lastItem(arr) {
+      return arr[arr.length - 1]
+    }
+
+    static leadItems(arr) {
+      return arr.slice(0, arr.length - 1)
+    }
+
+    static tailItems(arr) {
+      return arr.slice(1)
+    }
+
+    static randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)]
+    }
+
+    static getFirstItemWhere(arr, options) {
+      return findMatchFor(options, arr).item
+    }
+
+    static getFirstIndexWhere(arr, options) {
+      return findMatchFor(options, arr).index
+    }
+
+    static getItemsWhere(arr, options) {
+      const keys = Object.keys(options)
+      return arr.filter(item => isMatch(item, options, keys))
+    }
+
+    static updateFirstItemWhere(arr, options, updates) {
+      const match = findMatchFor(options, arr)
+      const copy = arr.slice()
+      if (match.index === -1) return copy
+      copy[match.index] = { ...match.item, ...updates }
+      return copy
+    }
+
+    static updateItemsWhere(arr, options, updates) {
+      const optionKeys = Object.keys(options)
+      return arr.map(originalItem => {
+        if (isMatch(originalItem, options, optionKeys)) return { ...originalItem, ...updates }
+        return originalItem
+      })
+    }
+
+    static updateAllItems(arr, updates) {
+      return arr.map(obj => ({ ...obj, ...updates }))
     }
 
   }
@@ -172,5 +260,7 @@
   else if (typeof window !== 'undefined') {
     window.Tsuki = window.T = Tsuki
   }
+
+  return Tsuki
 
 }())
