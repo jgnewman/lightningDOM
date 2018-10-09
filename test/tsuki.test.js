@@ -331,22 +331,6 @@ describe('Tsuki', function () {
       assert.ok(result)
     })
 
-    it('returns a vnode from a capture', async function () {
-      const result = await this.page.evaluate(() => {
-        const app = new Tsuki({
-          el: 'body',
-          init: { foo: 'bar' },
-          view: ({ foo }) => {
-            const ref = new T.Ref()
-            return ref.capture('mycapture', T.div`id=app-container`(foo))
-          }
-        })
-        return new Promise(resolve => {
-          setTimeout(() => resolve(document.querySelector('#app-container').innerHTML.trim()), 10)
-        })
-      })
-      assert.equal(result, 'bar')
-    })
   })
 
 })
