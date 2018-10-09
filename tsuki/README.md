@@ -1,4 +1,4 @@
-![Tsuki](https://raw.githubusercontent.com/jgnewman/lightningDOM/master/tsuki/tsuki-logo.png)
+![Tsuki](https://raw.githubusercontent.com/jgnewman/lightningDOM/master/tsuki/tsuki.png)
 
 ![Travis Build](https://travis-ci.org/jgnewman/lightningDOM.svg?branch=master)
 
