@@ -1,5 +1,6 @@
 (function () {
 
+  // All the tags you can build with `T.<tag>` syntax
   const RECOGNIZED_NODES = [
     'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
     'b', 'base', 'bdi', 'bdo', 'blockquote', 'br', 'button', 'canvas',
@@ -17,6 +18,7 @@
     'u', 'ul', 'video', 'wbr'
   ]
 
+  // Parses strings and vars from a template into an attributes object
   function buildAttrsFromTemplate(strings, vars) {
     const output = {}
 
@@ -39,132 +41,132 @@
     return output
   }
 
-  class Store {
-
-    constructor(observer) {
-      this.rules = {}
-      this.state = {}
-      this.observer = observer
-    }
-
-    addRule(name, rule) {
-      this.rules[name] = rule
-      return rule
-    }
-
-    run(ruleName, data) {
-      setTimeout(() => {
-        const transformer = this.rules[ruleName](data)
-        const newState = transformer(this.state)
-        this.state = newState
-        this.observer(newState)
-      }, 0)
-    }
-
-    get() {
-      return { ...this.state }
+  // Builds a lightningDOM virtual node from the strings and vars in a template
+  function buildNode(tag, strings, vars) {
+    return (...children) => {
+      const attrs = buildAttrsFromTemplate(strings || [], vars)
+      return lightningDOM.create(tag, attrs, children.map(child => typeof child === 'function' ? child() : child))
     }
   }
 
+  // Every app begins with a `new Tsuki`
   class Tsuki {
+    constructor({ el, view, init, rules }) {
+      this.el = typeof el === 'string' ? document.querySelector(el) : el;
+      this.state = new State({ init: init || {}, rules: rules || {} });
+      this.view = view;
+      this.app = lightningDOM.app();
+      this.isRendered = false;
+      this.tree = null;
 
-    constructor(options) {
-      this._options = options
-      this._store = null
-      this._runner = null
-      this._tree = null
-      this.props = {}
+      // Whenever we observe a change to the state, re-render the app
+      this.state.addObserver(newState => this.phase(newState))
+      this.state.tick()
+    }
+
+    // Do the initial render if we haven't done it yet. Migrate if we have.
+    phase(newState) {
+      const newTree = this.view(newState, this.state.getRules())
+      if (!this.isRendered) {
+        this.app.render(newTree, this.el)
+        this.tree = newTree
+        this.isRendered = true
+      } else {
+        this.app.migrate(this.tree, newTree)
+        this.tree = newTree
+      }
+    }
+
+    // Builds a function that takes extra arguments as specified by `toInject`
+    static inject(fn, ...toInject) {
+      return (...nativeArgs) => fn(...nativeArgs.concat(toInject))
+    }
+
+  }
+
+  // Allows you to capture references to real DOM nodes built from vnodes
+  class RefCapture {
+    constructor() {
       this.refs = {}
-
-      Object.keys(options).forEach(key => {
-        const optionValue = options[key]
-        if (typeof optionValue === 'function') {
-          this[key] = optionValue.bind(this)
-        } else {
-          this[key] = options[key]
-        }
-      })
-
-      const initialView = this.view
-      this.view = (props) => {
-        this.props = props
-        return initialView(props)
-      }
-
-      if (this.el) {
-        const app = lightningDOM.app()
-        const target = document.querySelector(this.el)
-        let hasRendered = false
-
-        this._store = new Store(newState => {
-
-          this.props = newState || {}
-          const newTree = this.view(this.props)
-
-          if (hasRendered) {
-            app.migrate(this._tree, newTree)
-          } else {
-            app.render(newTree, target)
-            hasRendered = true
-          }
-
-          this._tree = newTree
-        })
-
-        this._store.addRule('_INIT', initialData => {
-          return _ => initialData
-        })
-
-        if (this.rules) {
-          Object.keys(this.rules).forEach(ruleName => {
-            this._store.addRule(ruleName, this.rules[ruleName])
-            this.rules[ruleName] = data => this._store.run(ruleName, data)
-          })
-        }
-
-        this.init && this._store.run('_INIT', this.init())
-      }
     }
 
-
-    use(strings, ...vars) {
-      const props = buildAttrsFromTemplate(strings, vars)
-      this.props = props
-      return this.view(props)
-    }
-
+    // Capture a vnode and name the reference
     capture(name, vnode) {
-      this.refs[name] = () => vnode && vnode.node ? vnode.node : null
+      this.refs[name] = vnode
       return vnode
     }
 
-    // this.inject(someData)(this.someFunction)
-    // ...Calls this.someFunction with its normal args + someData as an extra arg at the end
-    inject(...toInject) {
-      return (fn) => (...args) => fn(...args.concat(toInject))
+    // Get the real node from the name of a reference
+    get(name) {
+      const ref = this.refs[name] && this.refs[name].node
+      return ref || null
+    }
+  }
+
+  // Add RefCapture to Tsuki as a "static method"
+  Tsuki.Ref = RefCapture;
+
+  // Every app gets a `new State`
+  class State {
+    constructor({ init, rules }) {
+      this.rules = rules || {};
+      this.state = init  || {};
+      this.observers = [];
+
+      // Create usable rules from the raw rules passed in
+      Object.keys(this.rules).forEach(key => {
+        this.addRule(key, this.rules[key])
+      })
     }
 
-    static _(tag, strings, vars) {
-      return (...children) => {
-        const attrs = buildAttrsFromTemplate(strings || [], vars)
-        return lightningDOM.create(tag, attrs, children.map(child => typeof child === 'function' ? child() : child))
+    // A _real_ rule generates a new state and passes it to observers
+    createRule(rule) {
+      return data => {
+        const stateThunk = rule(data)
+        const statePromise = stateThunk instanceof Promise ? stateThunk : Promise.resolve(stateThunk)
+
+        statePromise.then(stateBuilder => {
+          const newState = stateBuilder(this.state)
+          this.state = newState
+          this.observers.forEach(observer => observer(newState))
+        })
       }
     }
 
+    // Register a new rule manually
+    addRule(name, rule) {
+      this.rules[name] = this.createRule(rule)
+    }
+
+    // Register a function to run on state change
+    addObserver(fn) {
+      this.observers.push(fn)
+    }
+
+    // Access all the rules
+    getRules() {
+      return this.rules
+    }
+
+    // Manually cycle the state by passing its values to all observers
+    tick() {
+      this.createRule(_ => state => state)()
+    }
   }
 
+  // Run through all the recognized tag names and add static methods for each one to Tsuki
   RECOGNIZED_NODES.forEach(node => {
-    Tsuki[node] = (strings, ...vars) => Tsuki._(node, strings, vars)
+    Tsuki[node] = (strings, ...vars) => buildNode(node, strings, vars)
   })
 
   // Create module.exports if they exist
   if (typeof module !== 'undefined') {
-    module.exports = Tsuki;
+    module.exports = Tsuki
   }
 
   // Inject a global into window if it exists.
   else if (typeof window !== 'undefined') {
-    window.Tsuki = window.T = Tsuki;
+    window.Tsuki = window.T = Tsuki
   }
 
 }())

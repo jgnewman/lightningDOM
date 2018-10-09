@@ -4,11 +4,11 @@ Tsuki is a composable component framework built on top of LightningDOM. Currentl
 
 When trying to show how virtual DOMs stack up against each other, it can be tough to get your hands on raw copies of the core virtual DOM implementations that live _inside_ larger frameworks like React and Vue. Plus, in real life, people aren't using those raw implementations, they're using the larger frameworks.
 
-Tsuki is meant to achieve core feature parity with some of these frameworks, while leveraging LightningDOM at its core. Specifically, it provides composable components, redux-like state management, and reactive re-rendering as a response to stage changes. With that in mind, here are the results of the latest test (smaller is better):
+Tsuki is meant to achieve core feature parity with some of these frameworks while leveraging LightningDOM for the heavy lifting. For the purposes of these benchmarks, "core feature parity" means composable components, state management, and reactive re-rendering as a response to stage changes. With that in mind, here are the results of the latest test (smaller is better):
 
 ```
 lightningDOM (raw) v0.0.1   0.5969 seconds   ■■■■■■
-Tsuki v0.0.1                0.7107 seconds   ■■■■■■■
+Tsuki v0.0.1                0.6544 seconds   ■■■■■■■
 vue v2.5.17                 1.2807 seconds   ■■■■■■■■■■■■■
 react v16.5.2               2.0562 seconds   ■■■■■■■■■■■■■■■■■■■■■
 preact v8.3.1               1.8245 seconds   ■■■■■■■■■■■■■■■■■■
@@ -16,49 +16,47 @@ preact v8.3.1               1.8245 seconds   ■■■■■■■■■■■�
 (Tests performed on Chrome 69, macOS 10.14, 2.7GHz Intel Core i5, 16 GB RAM)
 ```
 
-Keep in mind, these are _informal_ benchmarks, but they require each framework to perform the following tasks upon each iteration: spin up a new application, render 10,000 items, remove half of them and re-sort the list, then add them back in and re-sort the list again.
+Keep in mind, these are _informal_ benchmarks, but they require each framework to perform the following task upon each iteration: spin up a new application, render 10,000 items, remove half of them and re-sort the list, then add them back in and re-sort the list again. The times listed above indicate the mean average time it took each framework to perform a single iteration of that task over multiple iterations.
+
+Tsuki did pretty well!
 
 ## Interested in Tsuki?
 
-Tsuki means "moon" in Japanese. The inspiration for calling the framework Tsuki came after my youngest child was listening to a Kyary Pamyu Pamyu song that contains the catchy little phrase "Kanpeki! Good job, Otsuki san!", which means basically, "It's perfect! Good job, Mr. Moon!" There was a moment when I was struggling with a little bug while putting Tsuki together and, when I finally solved it and watched the code perform as expected, I said, "Kanpeki! Good job, Otsuki san!" And the name stuck.
+Tsuki means "moon" in Japanese. The inspiration for the name came after my youngest child was listening to a Kyary Pamyu Pamyu song that contains the catchy little phrase "Kanpeki! Good job, Otsuki san!", which means basically, "It's perfect! Good job, Mr. Moon!" After solving a little bug in the code and seeing the framework perform as expected, I said to my code, "Kanpeki! Good job, Otsuki san!" And the name stuck.
 
 ### How does it work?
 
 Like this:
 
 ```javascript
+const markup = () => {
+  return T.div`class=app` ("Hello, world!")
+}
+
 new Tsuki({
-
   el: '#my-app-container',
-
-  view() {
-    return T.div`class=app` ('Hello, world!')
-  }
-
+  view: markup
 })
 ```
+
+**This is a fully-functional Tsuki app.**
 
 As you can see, there's a little UX inspiration in there from Vue.js. But functionally it's actually a lot more like React. Here's an example using composable components:
 
 ```javascript
-const myComponent = new Tsuki({
+const component = text => {
+  return text
+}
 
-  view() {
-    return this.props.text
-  }
+const appContainer = () => {
+  return T.div`class=app` (
+    component({ text: "Hello, world!" })
+  )
+}
 
-})
-
-const app = new Tsuki({
-
+new Tsuki({
   el: '#my-app-container',
-
-  view() {
-    return T.div`class=app` (
-      myComponent.use`text=${'Hello, world!'}`
-    )
-  }
-
+  view: appContainer
 })
 ```
 
@@ -66,7 +64,7 @@ const app = new Tsuki({
 
 As you probably noticed, there's a brand new DSL in here for building the DOM. We'll call it "Crescent". This was added for 2 reasons:
 
-1. I wanted to avoid having to write `lightningDOM.create` a million times (since I didn't want to have to transpile JSX).
+1. I didn't want to transpile JSX but I also wanted to avoid having to write `lightningDOM.create` a million times.
 2. In complete honesty, I wanted to add some extra runtime processing to the framework since everything was so minimal otherwise and the most popular frameworks are doing a bunch more stuff outside of the core feature set.
 
 Anyway, here's how it works: Crescent is just an ES6 template rendering system. It supports all tag names supported by HTML5 that can go inside a `body` tag.
@@ -102,83 +100,63 @@ It's pretty much that simple. Note that you don't surround your attribute values
 T.a`class=${"class1 class2 class3"} href=https://www.google.com` ("Click me!")
 ```
 
-If you want to drop one of your components into Crescent syntax, you can call that component's native `use` method. This method is also meant processing templates and it allows you to pass props to that component by writing them in the template string:
+If you want to drop one of your components into Crescent syntax, just call it like a function and pass in the props you want it to take:
 
 ```javascript
-const myComponent = new Tsuki({
-  view() {
-    return `Hello, ${this.props.name}!`
-  }
-})
+const component = name => {
+  return `Hello ${name}!`
+}
+
+const appContainer = () => {
+  return T.span`class=greeter` (
+    component({ name: "John" })
+  )
+}
 
 const myApp = new Tsuki({
   el: '#my-app',
-  view() {
-    return T.span`class=greeter` (
-      myComponent.use`name=John`
-    )
-  }
+  view: appContainer
 })
 ```
 
 ## API
 
-Tsuki's API is designed to be super simple. All apps are built from components and all components are made by calling `new Tsuki({ ...options })`. Most importantly, your component needs to render a view and that is done by making sure your options object contains a `view` function. You can put just about anything else you want into the options object, but there are a couple of reserved options we'll get to in a second.
+Tsuki's API is designed to be _tsuper_ simple. Every app starts with a `new Tsuki` and is built from components. All components are just functions that return Crescent syntax (i.e. LightningDom virtual trees).
+
+When you create a `new Tsuki`, you pass in an options object with at least two properties: `el` and `view`.
+
+The `el` property can either be a real DOM node or a CSS selector identifying a real DOM node. It tells Tsuki where to render your app. The `view` property is a component – a function that spits out some Crescent syntax. It must return a single element but that element can contain as many nested children as you like.
+
 
 ```javascript
-new Tsuki({
-
-  getGreeting() {
-    return "Hello, world!"
-  },
-
-  view() {
-    return this.getGreeting()
-  }
-})
-```
-
-Every Tsuki app needs a top level component with an option called `el`. This option should be a CSS selector that will be used to identify the node in which the app will be rendered. _Only the top level component in your application should take the `el` option._ By virtue of specifying this option, your component will be automatically rendered.
-
-> Note that your top level component's view function can not return a simple string. It must return a single call to `T.<something>`, in which you can nest as many strings or node children as you like.
-
-```javascript
-new Tsuki({
-
+const myApp = new Tsuki({
   el: '#my-app',
 
-  view() {
+  view: () => {
     return T.div`class=app-container` (
       "Hello world!"
     )
   }
-
 })
 ```
 
 ### Managing State
 
-Your top level component can contain a few other options to help you manage the state of your app.
+Every Tsuki app implicitly holds a single store of truth. It takes the form of an object representing the state of your application (much like Redux). The values in your state will be passed as an object to your app's `view` function. You then have the responsibility of passing the appropriate portions of your state down to smaller components. Whenever the state changes, your app is automatically re-rendered with the new values.
 
-Every Tsuki app implicitly holds a single store of truth. It takes the form of an object representing the state of your application (much like Redux). The values in your state will be passed as props to your top level component's `view` function. You then have the responsibility of passing the appropriate portions of your state down to smaller components. Whenever the state changes, your app is re-rendered.
-
-You can pre-populate your state by giving your top level component an `init` function. It will be called when your app spins up and whatever it returns will be fed to the `view` function as props.
+You can pre-populate your state by giving your app an `init` object. When your app spins up for the first time, it will call the `view` function and hand it your pre-populated state as an object we usually call `props`.
 
 ```javascript
-new Tsuki({
-
+const myApp = new Tsuki({
   el: '#my-app',
 
-  init() {
-    return {
-      greeting: "Hello, world!"
-    }
+  init: {
+    greeting: "Hello, world!"
   },
 
-  view() {
-    return T.div`class=app-container` ( this.props.greeting )
+  view: props => {
+    return T.div`class=app-container` ( props.greeting )
   }
-
 })
 ```
 
@@ -186,12 +164,15 @@ To change state, you'll write rules. Each rule is a function that takes in data 
 
 > Note: Always return a new copy of the state. Never modify the existing one.
 
-Rules should be written in a `rules` object in your top level component.
+Rules should be written in a `rules` option passed to your app.
 
 ```javascript
-new Tsuki({
-
+const myApp = new Tsuki({
   el: '#my-app',
+
+  init: {
+    greeting: "Hello, world!"
+  },
 
   rules: {
     updateGreeting: newGreeting => state => {
@@ -199,25 +180,21 @@ new Tsuki({
     }
   },
 
-  init() {
-    return {
-      greeting: "Hello, world!"
-    }
-  },
-
-  view() {
-    return T.div`class=app-container` ( this.props.greeting )
+  view: props => {
+    return T.div`class=app-container` ( props.greeting )
   }
-
 })
 ```
 
-Once you've created rules, you can run them whenever you'd like or pass them down as props to smaller components.
+Once you've created rules, they will be passed to your `view` function along with your props. This way, you can run them whenever you'd like or pass them down to smaller components.
 
 ```javascript
-new Tsuki({
-
+const myApp = new Tsuki({
   el: '#my-app',
+
+  init: {
+    greeting: "Hello, world!"
+  },
 
   rules: {
     updateGreeting: newGreeting => state => {
@@ -225,52 +202,113 @@ new Tsuki({
     }
   },
 
-  init() {
-    return {
-      greeting: "Hello, world!"
-    }
-  },
-
-  onclick() {
-    this.rules.updateGreeting("It worked!")
-  },
-
-  view() {
+  view: (props, rules) => {
     return T.div`class=app-container` (
-      this.props.greeting,
-      T.button`onclick=${this.onclick}` ('Change greeting'),
+      props.greeting,
+      T.button`onclick=${() => rules.updateGreeting("It worked!")}` ('Change greeting'),
     )
   }
-
 })
 ```
 
-In this example we add a button to the view. When it gets clicked, the `onclick` function runs and executes the `updateGreeting` rule. This rule updates the state and the app gets re-rendered as a result.
+In this example we added a button to the view. When it gets clicked, the `onclick` function runs and executes the `updateGreeting` rule. This rule updates the state and the app gets re-rendered as a result.
+
+One thing to note, your rules can also be asynchronous!
+
+```javascript
+rules: {
+  updateData: async (url) => {
+    const data = await getSomeData(url)
+    return state => ({ ...state, data: data })
+  }
+}
+
+// or...
+
+rules: {
+  updateData: url => {
+    return fetchSomeDataWithPromise(url).then(data => {
+      return state => ({ ...state, data: data })
+    })
+  }
+}
+
+// or if you're worried about errors...
+
+rules: {
+  updateData: url => {
+    return fetchSomeDataWithPromise(url)
+      .then(data => {
+        return state => ({ ...state, data: data })
+      })
+      .catch(err => {
+        return state => ({ ...state, errMsg: err.message })
+      })
+  }
+}
+```
 
 ### Referencing Real Nodes
 
 One other thing you might want to do occasionally is grab a reference to a real DOM node. Sometimes there's just no way around this, especially if you want to do something like manually trigger a focus on a form field. To help you out here, Tsuki allows you to capture references to the nodes built from Crescent syntax:
 
 ```javascript
-new Tsuki({
+const onclick = (rules, ref) => {
+  rules.updateGreeting("It worked!")
+  console.log(ref.get('myDiv'))
+}
 
+const myApp = new Tsuki({
   el: '#my-app',
 
-  onclick() {
-    console.log("Here's the button you clicked:", this.refs.myButton())
+  init: {
+    greeting: "Hello, world!"
   },
 
-  view() {
+  rules: {
+    updateGreeting: newGreeting => state => {
+      return { ...state, greeting: newGreeting }
+    }
+  },
+
+  view: (props, rules) => {
+    const ref = new T.Ref()
+
     return T.div`class=app-container` (
-      this.capture('myButton',
-        T.button`onclick=${this.onclick}` ("Click me!")
-      ),
+      props.greeting,
+      ref.capture('myDiv', T.div`I'm a div!`),
+      T.button`onclick=${() => onclick(rules, ref)}` ('Change greeting'),
     )
   }
-
 })
 ```
 
-In this example, we wrap our call to `T.button` in a call to `this.capture` and we give it a name (`myButton`). This essentially generates and stores a function that allows us to access the real DOM node associated with this piece of the component. When the button is clicked, the `onclick` function runs and grabs the node by calling `this.refs.myButton()`.
+In this example, we created a new `Ref` object and wrapped a div in a call to `ref.capture`. We also gave it a name (`myDiv`). This provided a way for us to grab the real DOM node associated with our Crescent div by calling `ref.get` and passing in the name of the reference.
+
+**One last trick:**
+
+In the last example we passed an arrow function to our button's `onclick` attribute because, normally, `onclick` is called with an event object but we really only cared about our `rules` and `ref` data. Tsuki gives you a convenient way to generate a function in a case like this that takes all the arguments you want:
+
+```javascript
+const onclick = (evt, greeting) => {
+  console.log('I was called with', evt, greeting)
+}
+
+const myApp = new Tsuki({
+  el: '#my-app',
+
+  init: {
+    greeting: 'Hello, world!'
+  },
+
+  view: ({ greeting }) => {
+    return T.div`class=app-container` (
+      T.button`onclick=${T.inject(onclick, greeting)}` ('Click me!'),
+    )
+  }
+})
+```
+
+Here we use `T.inject` to inject `greeting` into the `onclick` function as an argument. This method inserts any number of arguments you specify _after_ any native arguments that function would normally take.
 
 And that's all there is to it!

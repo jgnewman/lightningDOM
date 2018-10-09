@@ -248,31 +248,28 @@
 
         beginStamp = performance.now()
 
+        const view = (props, rules) => {
+          if (props.stage === 1) rules.updateItems(largeArr)
+          if (props.stage === 2) rules.updateItems(smallArr)
+          if (props.stage === 3) rules.updateItems(largeArr)
+          if (props.stage === 4) defer(() => end(beginStamp, output, goTsuki))
+
+          return T.ul`` (
+            props.items.map(item => T.li`key=${item+""}`(item))
+          )
+        }
+
         new Tsuki({
           el: '#t-app',
-
+          view: view,
+          init: {
+            stage: 1,
+            items: []
+          },
           rules: {
             updateItems: newItems => state => {
               return { ...state, stage: state.stage + 1, items: newItems }
             }
-          },
-
-          init() {
-            return {
-              items: [],
-              stage: 1
-            }
-          },
-
-          view() {
-            if (this.props.stage === 1) this.rules.updateItems(largeArr)
-            if (this.props.stage === 2) this.rules.updateItems(smallArr)
-            if (this.props.stage === 3) this.rules.updateItems(largeArr)
-            if (this.props.stage === 4) defer(() => end(beginStamp, output, goTsuki))
-
-            return T.ul`` (
-              this.props.items.map(item => T.li`key=${item+""}`(item))
-            )
           }
         })
 
