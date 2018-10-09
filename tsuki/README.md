@@ -1,4 +1,4 @@
-![Tsuki](https://raw.githubusercontent.com/jgnewman/lightningDOM/master/tsuki/tsuki.png)
+![Tsuki](https://raw.githubusercontent.com/jgnewman/lightningDOM/master/tsuki/tsuki-logo.png)
 
 Tsuki is a composable component framework built on top of LightningDOM. Currently it's more of an experiment than a ready-for-use tool, but it serves to give a little more credence to LightningDOM's benchmarks.
 
