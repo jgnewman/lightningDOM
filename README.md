@@ -1,4 +1,5 @@
 ![LightningDOM](https://raw.githubusercontent.com/jgnewman/lightningDOM/master/lightningdom.png)
+BETA
 
 _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
 
