@@ -29,6 +29,9 @@
       component(props, rules),
       T.li`class=list-item` ('Hello, how are you?'),
       T.li`class=list-item` ('Fine, how are you?'),
+      T.svg`viewBox=${"553 230 70 70"} width=70 height=70` (
+        T.rect`x=553 y=230 width=70 height=70 fill=rgb(235,235,235)`
+      )
     )
 
   const app = new Tsuki({

@@ -20,6 +20,12 @@
   var NO_BROWSER_ERROR = "You can't use lightningDOM in a non-browser environment."
   var NO_KEY_ERROR = "All nodes in an iteration must have a unique `key` string attribute."
 
+  var SVG = [
+    'svg', 'g', 'path', 'polygon', 'rect', 'circle', 'line', 'clipPath',
+    'cursor', 'defs', 'desc', 'ellipse', 'filter', 'font', 'glyph',
+    'image', 'text', 'textPath'
+  ];
+
   // Constants we can use to reference all of the possibilities
   // for node changes resulting from a diff.
   var ADD_NODE = {};
@@ -100,7 +106,7 @@
         elem = realParent;
 
       } else {
-        elem = doc.createElement(this.tag);
+        elem = SVG.indexOf(this.tag) === -1 ? doc.createElement(this.tag) : doc.createElementNS("http://www.w3.org/2000/svg", this.tag);
       }
 
       // Set attributes on the node for every key in the attrs
@@ -802,7 +808,11 @@
 
   var out = {
     app: app,
-    create: create
+    create: create,
+    meta: {
+      version: '0.0.3',
+      svgSupport: SVG.sort()
+    }
   };
 
   // Create module.exports if they exist

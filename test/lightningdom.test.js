@@ -243,6 +243,35 @@ describe('lightningDOM', function () {
         }, 10)
       })
     })
+
+    it('renders svg', async function () {
+      const result = await this.page.evaluate(() => {
+        render(create('svg', {
+          "id": "my-svg",
+          "xmlns": "http://www.w3.org/2000/svg",
+          "xmlns:xlink": "http://www.w3.org/1999/xlink",
+          "viewBox": "553 230 70 70",
+          "width": "70",
+          "height": "70"
+        }, [
+          create('rect', {
+            x: "553",
+            y: "230",
+            width: "70",
+            height: "70",
+            transform: "matrix(1,0,0,1,0,0)",
+            "fill": "rgb(235,235,235)"
+          })
+        ]), document.body)
+
+        return new Promise(resolve => setTimeout(() => {
+          const node = document.querySelector('#my-svg')
+          resolve(JSON.parse(JSON.stringify(getComputedStyle(node))))
+        }, 10))
+      })
+      assert.equal(result.width, '70px')
+      assert.equal(result.height, '70px')
+    })
   })
 
   describe('#migrate', function () {

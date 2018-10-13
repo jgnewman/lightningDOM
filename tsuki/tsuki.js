@@ -1,4 +1,13 @@
 (function () {
+  let lightningDOM
+
+  if (typeof module !== 'undefined' && typeof require === 'function') {
+    lightningDOM = require('lightning-dom')
+  }
+
+  else if (typeof window !== 'undefined') {
+    lightningDOM = window.lightningDOM
+  }
 
   // All the tags you can build with `T.<tag>` syntax
   const RECOGNIZED_NODES = [
@@ -13,10 +22,10 @@
     'object', 'ol', 'optgroup', 'option', 'output',
     'p', 'param', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby',
     's', 'samp', 'script', 'section', 'select', 'small', 'source', 'span',
-    'strong', 'style', 'sub', 'summary', 'sup', 'svg',
+    'strong', 'style', 'sub', 'summary', 'sup',
     'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track',
     'u', 'ul', 'video', 'wbr'
-  ]
+  ].concat(lightningDOM.meta.svgSupport)
 
   // Parses strings and vars from a template into an attributes object
   function buildAttrsFromTemplate(strings, vars) {
@@ -250,6 +259,9 @@
   RECOGNIZED_NODES.forEach(node => {
     Tsuki[node] = (strings, ...vars) => buildNode(node, strings, vars)
   })
+
+  // Make exporting a little nicer
+  Tsuki.Tsuki = Tsuki.T = Tsuki
 
   // Create module.exports if they exist
   if (typeof module !== 'undefined') {

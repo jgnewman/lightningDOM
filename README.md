@@ -85,7 +85,11 @@ LightningDOM achieves its (theoretically) unmatched speed and efficiency by adhe
 
 #### `create(String: tag [, Object: attributes, Array: children])`
 
-Builds a virtual DOM node which represents an HTML element. Your arguments tell it what kind of element it represents, what the attributes are for that element, and what its child nodes should be.
+Builds a virtual DOM node which represents an HTML element.
+
+Your arguments tell it what kind of element it represents, what the attributes are for that element, and what its child nodes should be.
+
+> **Note:** Currently, LightningDOM provides only basic SVG support. To see a full list of all supported svg-related tags, log `lightningDOM.meta.svgSupport`.
 
 Attributes are named _exactly_ as they would be in real HTML. For example, you must use "class" instead of "className" (as opposed to other libraries like React DOM). Part of the reason lightningDOM is fast and small is that it doesn't waste time translating your attributes for you.
 
