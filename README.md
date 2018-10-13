@@ -109,7 +109,7 @@ In addition to standard DOM events, lightningDOM provides two more event attribu
 create('div', {onmount: () => console.log('div was injected')});
 ```
 
-If you include an array of children, you have three options for what you are allowed to put into that array. First, you can use more virtual nodes.
+If you include an array of children, you have four options for what you are allowed to put into that array. First, you can use more virtual nodes.
 
 ```javascript
 create('div', {}, [
@@ -121,6 +121,12 @@ Second, can use strings.
 
 ```javascript
 create('div', {}, [ "A text node inside a div" ]);
+```
+
+Third, you can use the value `null` (in which case, the null node will be ignored).
+
+```javascript
+create('div', {}, [ null ]);
 ```
 
 Lastly, you can use arrays. If you pass an array in as a child, each node in that array _must_ be given a unique `key` attribute (unique to the iteration, not globally unique). If keys aren't there, errors shall be thrown. This allows lightningDOM to work much more efficiently when diffing this array against a future version. Key attributes are not rendered to the real DOM.

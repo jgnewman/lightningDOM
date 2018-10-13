@@ -63,6 +63,54 @@ describe('Tsuki', function () {
     })
   })
 
+  describe('conditional utils', function () {
+    describe('#when ... use', function () {
+      it('runs a function when the condition is truthy', async function () {
+        const result = await this.page.evaluate(() => Tsuki.when(true).use(() => {
+          return 'OK'
+        }))
+        assert.equal(result, 'OK')
+      })
+
+      it('returns null when the condition is falsy', async function () {
+        const result = await this.page.evaluate(() => Tsuki.when(false).use(() => {
+          return 'OK'
+        }))
+        assert.equal(result, null)
+      })
+    })
+
+    describe('#pick & #choose', function () {
+      it('executes only the first truthy when...choose statement', async function () {
+        const result = await this.page.evaluate(() => {
+          const out = [];
+          Tsuki.pick(
+            Tsuki.when(false).choose(() => out.push(1)),
+            Tsuki.when(true).choose(() => out.push(2)),
+            Tsuki.when(true).choose(() => out.push(3))
+          )
+          return out
+        })
+        assert.equal(result.length, 1)
+        assert.equal(result[0], 2)
+      })
+
+      it('converts Tsuki.choose to a when(true)...choose statement', async function () {
+        const result = await this.page.evaluate(() => {
+          const out = [];
+          Tsuki.pick(
+            Tsuki.when(false).choose(() => out.push(1)),
+            Tsuki.when(false).choose(() => out.push(2)),
+            Tsuki.choose(() => out.push(3))
+          )
+          return out
+        })
+        assert.equal(result.length, 1)
+        assert.equal(result[0], 3)
+      })
+    })
+  })
+
   describe('array utils', function () {
 
     describe('#firstItem', function () {

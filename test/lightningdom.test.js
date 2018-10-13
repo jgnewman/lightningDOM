@@ -189,6 +189,30 @@ describe('lightningDOM', function () {
       assert.ok(result)
     })
 
+    it('ignores null children', async function () {
+      const result = await this.page.evaluate(() => {
+        render(create('div', { id: 'foo' }, [null]), document.body)
+
+        return new Promise(resolve => setTimeout(() => {
+          const node = document.querySelector('#foo')
+          resolve(node.innerHTML.trim() === '')
+        }, 10))
+      })
+      assert.ok(result)
+    })
+
+    it('ignores undefined children', async function () {
+      const result = await this.page.evaluate(() => {
+        render(create('div', { id: 'foo' }, [undefined]), document.body)
+
+        return new Promise(resolve => setTimeout(() => {
+          const node = document.querySelector('#foo')
+          resolve(node.innerHTML.trim() === '')
+        }, 10))
+      })
+      assert.ok(result)
+    })
+
     it('renders keylist children', async function () {
       const result = await this.page.evaluate(() => {
         render(create('div', { id: 'foo' }, [[

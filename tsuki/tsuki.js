@@ -83,6 +83,28 @@
     return match || {item: undefined, index: -1};
   }
 
+  // T.when(path === 'foo').use(() => { ... })
+  // T.pick( T.when(path).choose(() => { ... }), T.choose(() => { ... }) )
+  class Condition {
+
+    constructor(bool) {
+      this.bool = bool
+      this.pickOption = null
+    }
+
+    // Executes the provided function if the condition was truthy
+    use(fn) {
+      if (this.bool) return fn()
+      return null
+    }
+
+    // To be used with `T.pick`. Registers a function to run if the condition passes.
+    choose(fn) {
+      this.pickOption = fn
+      return this
+    }
+  }
+
   // Every app begins with a `new Tsuki`
   class Tsuki {
     constructor({ el, view, init, rules }) {
@@ -121,6 +143,27 @@
     // Builds a function that takes extra arguments as specified by `toInject`
     static inject(fn, ...toInject) {
       return (...nativeArgs) => fn(...nativeArgs.concat(toInject))
+    }
+
+    // To be used with T.when().choose()
+    // T.pick( T.when(false).choose(x), T.when(true).choose(y) )
+    static pick(...conditions) {
+      for (let i = 0; i < conditions.length; i += 1) {
+        let cond = conditions[i]
+        if (cond.bool) return cond.use(cond.pickOption)
+      }
+      return null
+    }
+
+    // A shortcut for `T.when(true).choose(() => { ... })`
+    static choose(fn) {
+      const cond = new Condition(true)
+      return cond.choose(fn)
+    }
+
+    // After this point, conditional tools for Crescent syntax
+    static when(bool) {
+      return new Condition(bool)
     }
 
     // After this point, a bunch of static utils for handling arrays and

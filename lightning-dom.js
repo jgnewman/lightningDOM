@@ -94,9 +94,12 @@
         throw new Error(NO_KEY_ERROR);
       }
 
+      if (this.tag === 'null') {
+        elem = doc.createTextNode('');
+
       // Create a text node instead of an element if this is
       // supposed to be a text node.
-      if (this.tag === 'text') {
+      } else if (this.tag === 'text') {
         elem = doc.createTextNode(this.text);
 
       // We'll use the parent as the element to append children to
@@ -464,7 +467,10 @@
     for (var i = 0; i < len; i += 1) {
       var child = children[i];
 
-      if (child instanceof Array) {
+      if (child === null || child === undefined) {
+        children[i] = new Node('null', {}, []);
+
+      } else if (child instanceof Array) {
         children[i] = new Node('keylist', {}, child, null, node); // where node is the keylist parent
 
       } else if (!(child instanceof Node)) {

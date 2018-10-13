@@ -246,6 +246,47 @@ rules: {
 }
 ```
 
+### Working With Conditions
+
+Sometimes you may want to render a node only if a certain condition is truthy. The ugly way to do that looks like this:
+
+```javascript
+T.div`class=app` (
+  T.h1`` ("Hello, user!"),
+  (() => {
+    if (shouldShowMoreText) {
+      return T.p`class=more-text` ("Here's some more text for you!")
+    }
+  })()
+)
+```
+
+This is a little annoying and hard to read. Fortunately, Tsuki contains a few convenience utils for dealing with conditions. The first one is `T.when`. This function takes a condition and allows you to do a couple different things with it. For the most basic usage, you'll want to render a node if some condition is true. You'd do that like this:
+
+```javascript
+T.div`class=app` (
+  T.h1`` ("Hello, user!"),
+  T.when(shouldShowMoreText).use(() =>
+    T.p`class=more-text` ("Here's some more text for you!")
+  )
+)
+```
+
+The other thing you'll want to do is pick which node to render based on a few possible conditions. For that, you can use `pick` and `choose`:
+
+```javascript
+T.div`class=app` (
+  T.h1`` ("Hello, user!"),
+  T.pick(
+    T.when(location.path === 'foo').choose(fooComponent),
+    T.when(location.path === 'bar').choose(barComponent),
+    T.choose(defaultComponent) // else case
+  )
+)
+```
+
+In this example, we pass a few instances of `T.when ... choose` to `T.pick`. It will take a look at each of their conditions and execute the `choose` function for the first truthy value. You can also use `T.choose(x)` as a shortcut for `T.when(true).choose(x)` in order to specify an else case.
+
 ### Referencing Real Nodes
 
 One other thing you might want to do occasionally is grab a reference to a real DOM node. Sometimes there's just no way around this, especially if you want to do something like manually trigger a focus on a form field. To help you out here, Tsuki allows you to capture references to the nodes built from Crescent syntax:

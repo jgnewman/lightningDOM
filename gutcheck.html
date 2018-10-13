@@ -30,6 +30,7 @@ for (var i = 0; i < 10000; i += 1) {
 
 var tree1 =
 create('div', {style: "background: #eaeaea;"}, [
+  null,
   create('button', {onclick: rerender}, [ "rerender" ]),
   create('ul', {}, [
     initArr.map(item => create('li', {key: item+""}, [item]))
