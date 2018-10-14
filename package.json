@@ -1,6 +1,6 @@
 {
   "name": "lightning-dom",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "lightning-dom.js",
   "repository": "git@github.com:jgnewman/lightningDOM",
   "author": "john <rescuecreative@gmail.com>",
