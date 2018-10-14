@@ -43,6 +43,36 @@
   }
   var doc = window.document;
 
+  // Handles correctly setting attributes on nodes
+  function setAttribute(node, attr, val) {
+    switch (attr) {
+      case 'value':
+      case 'defaultValue':
+      case 'checked':
+      case 'defaultChecked':
+        node[attr] = val;
+        break;
+      default:
+        node.setAttribute(attr, val);
+    }
+  }
+
+  // Handles correctly removing attributes from nodes
+  function removeAttribute(node, attr) {
+    switch (attr) {
+      case 'value':
+      case 'defaultValue':
+        node[attr] = "";
+        break;
+      case 'checked':
+      case 'defaultChecked':
+        node[attr] = false;
+        break;
+      default:
+        node.removeAttribute(attr);
+    }
+  }
+
   // Where type is one of our available constants,
   // prev is the Node to be changed, next is the Node
   // we're migrating to, and data is any extra data needed
@@ -119,7 +149,7 @@
         if (i !== 'key') {
           typeof this.attrs[i] === 'function'
             ? elem[i] = this.attrs[i]
-            : elem.setAttribute(i, this.attrs[i]);
+            : setAttribute(elem, i, this.attrs[i]);
         }
       }
 
@@ -553,7 +583,7 @@
       if (typeof change.data[1] === 'function') {
         change.prev.node[change.data[0]] = change.data[1];
       } else {
-        change.prev.node.setAttribute(change.data[0], change.data[1]);
+        setAttribute(change.prev.node, change.data[0], change.data[1]);
       }
       transferNode(change);
     }
@@ -566,7 +596,7 @@
       if (typeof change.data[1] === 'function') {
         change.prev.node[change.data[0]] = undefined;
       } else {
-        change.prev.node.removeAttribute(change.data);
+        removeAttribute(change.prev.node, change.data[0]);
       }
       transferNode(change);
     }

@@ -31,6 +31,7 @@ for (var i = 0; i < 10000; i += 1) {
 var tree1 =
 create('div', {style: "background: #eaeaea;"}, [
   null,
+  create('input', {id: 'myinput', type: 'text', value: 'foo'}, []),
   create('button', {onclick: rerender}, [ "rerender" ]),
   create('ul', {}, [
     initArr.map(item => create('li', {key: item+""}, [item]))
@@ -45,6 +46,8 @@ function rerender() {
 
   tree2 =
   create('div', {style: "background: #eaeaea;"}, [
+    null,
+    create('input', {id: 'myinput', type: 'text'}, []),
     create('button', {onclick: goback}, [ "rerender" ]),
     create('ul', {}, [
       newArr.map(item => create('li', {key: item+""}, [item]))

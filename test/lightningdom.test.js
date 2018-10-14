@@ -148,7 +148,7 @@ describe('lightningDOM', function () {
       assert.ok(result)
     })
 
-    it('renders attributes correctly', async function () {
+    it('renders normal attributes correctly', async function () {
       const result = await this.page.evaluate(() => {
         render(create('div', {
           'id': 'foo',
@@ -163,6 +163,68 @@ describe('lightningDOM', function () {
         }, 10))
       })
       assert.ok(result)
+    })
+
+    it('renders value correctly', async function () {
+      const result = await this.page.evaluate(() => {
+        const tree1 = create('input', {
+          'id': 'foo',
+          'type': 'text',
+          'value': 'foo',
+        })
+
+        const tree2 = create('input', {
+          'id': 'foo',
+          'type': 'text',
+        })
+
+        render(tree1, document.body)
+
+        return new Promise(resolve => {
+          const out = {}
+          setTimeout(() => {
+            out.tree1Value = document.querySelector('#foo').value
+            migrate(tree1, tree2)
+            setTimeout(() => {
+              out.tree2Value = document.querySelector('#foo').value
+              resolve(out)
+            }, 10)
+          }, 10)
+        })
+      })
+      assert.equal(result.tree1Value, 'foo')
+      assert.equal(result.tree2Value, '')
+    })
+
+    it('renders checked correctly', async function () {
+      const result = await this.page.evaluate(() => {
+        const tree1 = create('input', {
+          'id': 'foo',
+          'type': 'checkbox',
+          'checked': true,
+        })
+
+        const tree2 = create('input', {
+          'id': 'foo',
+          'type': 'checkbox',
+        })
+
+        render(tree1, document.body)
+
+        return new Promise(resolve => {
+          const out = {}
+          setTimeout(() => {
+            out.tree1Value = document.querySelector('#foo').checked
+            migrate(tree1, tree2)
+            setTimeout(() => {
+              out.tree2Value = document.querySelector('#foo').checked
+              resolve(out)
+            }, 10)
+          }, 10)
+        })
+      })
+      assert.equal(result.tree1Value, true)
+      assert.equal(result.tree2Value, false)
     })
 
     it('recursively renders children', async function () {
@@ -264,7 +326,7 @@ describe('lightningDOM', function () {
           assert.ok(error instanceof Error)
           assert.ok(/iteration.+key/.test(error.message))
           resolve()
-        }, 10)
+        }, 20)
       })
     })
 
