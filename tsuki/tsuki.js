@@ -261,19 +261,22 @@
 
     // A _real_ rule generates a new state and passes it to observers
     createRule(rule) {
-      return data => {
-        const stateThunk = rule(data)
-        const statePromise = stateThunk instanceof Promise ? stateThunk : Promise.resolve(stateThunk)
+      const migrateState = newState => {
+        this.state = newState
+        this.observers.forEach(observer => observer(newState))
+      }
 
-        // We deliberately don't catch errors here because, if this wasn't a
-        // promise it would have already errored, and if it was, we want to put
-        // the onus on the user to handle their own promise errors and return
-        // a new state when an error occurs.
-        statePromise.then(stateBuilder => {
-          const newState = stateBuilder(this.state)
-          this.state = newState
-          this.observers.forEach(observer => observer(newState))
-        })
+      return data => {
+        const stateStage1 = rule(data)
+        if (stateStage1 instanceof Promise) {
+          // We deliberately don't catch errors here because, if this wasn't a
+          // promise it would have already errored, and if it was, we want to put
+          // the onus on the user to handle their own promise errors and return
+          // a new state when an error occurs.
+          stateStage1.then(stateStage2 => migrateState(stateStage2(this.state)))
+        } else {
+          migrateState(stateStage1(this.state))
+        }
       }
     }
 

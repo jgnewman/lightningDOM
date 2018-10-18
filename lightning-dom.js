@@ -188,9 +188,16 @@
             isFound = true;
             matchingAttrs[prevAttr] = true;
 
+            var prevVal = this.attrs[prevAttr];
+            var nextVal = next.attrs[nextAttr];
+
+            if (nextAttr === 'value' && this.node) {
+              prevVal = this.node.value;
+            }
+
             // If the value of the two versions is not equal, collect
             // a REPLACE_ATTR Change because it needs to be updated.
-            if (next.attrs[nextAttr] !== this.attrs[prevAttr]) {
+            if (nextVal !== prevVal) {
               changes.push(new Change(REPLACE_ATTR, this, next, [nextAttr, next.attrs[nextAttr]]))
             }
 
@@ -583,7 +590,12 @@
       if (typeof change.data[1] === 'function') {
         change.prev.node[change.data[0]] = change.data[1];
       } else {
-        setAttribute(change.prev.node, change.data[0], change.data[1]);
+        var attrName = change.data[0];
+        var newVal = change.data[1];
+
+        if (attrName !== 'value') {
+          setAttribute(change.prev.node, attrName, newVal);
+        }
       }
       transferNode(change);
     }
@@ -770,22 +782,14 @@
     var renderInto = null;
     function render(tree, into) {
       renderInto = into;
-      renderTimer = setTimeout(function () {
-
-        // If migrations have been queued up before this
-        // run loop began, there is no sense in rendering the
-        // initial DOM state since it is no longer accurate.
-        // Instead, we'll let the defer function take care of it.
-        if (migration.length < 2) {
-          hasRendered = true;
-          renderProcess(tree, into);
-        }
-      }, 0);
+      defer(null, tree)
     }
+
+    var postMigrationCallback = null;
 
     // This function will handle migrating from the current
     // state of the DOM to the next.
-    function defer(prev, next) {
+    function defer(prev, next, callback) {
 
       // If the migration is empty, then we don't know the current
       // state of the DOM. It must be our prev virtual tree.
@@ -794,6 +798,10 @@
       // accurate.
       !migration.length && migration.push(prev);
       migration[1] = next;
+
+      if (callback) {
+        postMigrationCallback = callback;
+      }
 
       // If we don't already have a run loop ready to go, start one up.
       // If we do, stop here because the following timer function will
@@ -813,12 +821,14 @@
           // have been a waste. Instead, we'll run the initial render
           // now using the most current DOM state.
           } else {
-            clearTimeout(renderTimer);
+            hasRendered = true;
             renderProcess(migration[1], renderInto);
           }
 
           // Reset our migration, tracking the current reflection of the DOM.
           migration = [migration[1]];
+          postMigrationCallback && postMigrationCallback();
+          postMigrationCallback = null;
         }, 0);
       }
 
@@ -829,8 +839,8 @@
     // run loop, we can skip most of them and migrate straight from
     // the current state to the latest state, skipping all steps
     // in between.
-    function migrate(prevTree, nextTree) {
-      defer(prevTree, nextTree);
+    function migrate(prevTree, nextTree, callback) {
+      defer(prevTree, nextTree, callback);
       return nextTree;
     }
 

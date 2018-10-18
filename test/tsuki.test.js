@@ -314,12 +314,14 @@ describe('Tsuki', function () {
   describe('state manipulation', function () {
     it('re-renders when rules are triggered', async function () {
       const result = await this.page.evaluate(() => {
+        let trackedValue = null;
         let changed = false;
         const app = new Tsuki({
           el: 'body',
           init: { foo: 'bar' },
           rules: { update: data => state => ({ ...state, foo: data }) },
           view: ({ foo }, { update }) => {
+            trackedValue = foo
             if (!changed) {
               changed = true
               update('baz')
@@ -328,7 +330,7 @@ describe('Tsuki', function () {
           }
         })
         return new Promise(resolve => {
-          setTimeout(() => resolve(document.querySelector('#app-container').innerHTML.trim()), 10)
+          setTimeout(() => resolve(trackedValue), 10)
         })
       })
       assert.equal(result, 'baz')

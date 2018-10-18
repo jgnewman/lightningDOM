@@ -102,7 +102,6 @@
     </script>
 
     <script>
-      const app = lightningDOM.app()
       const create = lightningDOM.create
 
       const ITERATIONS = 10
@@ -204,6 +203,7 @@
 
       // Test for lightningDOM
       function goLightning() {
+
         let beginStamp = null
         const output = document.querySelector('#ld-output')
 
@@ -215,6 +215,8 @@
         populateOutput(output)
 
         beginStamp = performance.now()
+        const app = lightningDOM.app()
+
         const tree1 = create('ul')
         app.render(tree1, document.querySelector('#ld-app'))
 
@@ -228,10 +230,10 @@
         ])
         app.migrate(tree2, tree3)
 
-        const tree4 = create('ul', { onmount: () => end(beginStamp, output, goLightning) }, [
+        const tree4 = create('ul', null, [
           largeArr.map(item => create('li', { key: item+"" }, [item]))
         ])
-        app.migrate(tree3, tree4)
+        app.migrate(tree3, tree4, () => end(beginStamp, output, goLightning))
       }
 
       // Test for Tsuki
