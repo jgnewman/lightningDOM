@@ -50,8 +50,9 @@
       case 'defaultValue':
       case 'checked':
       case 'defaultChecked':
-        node[attr] = val;
-        break;
+        if (node.nodeName === 'INPUT') {
+          node[attr] = val;
+        }
       default:
         node.setAttribute(attr, val);
     }
@@ -59,18 +60,14 @@
 
   // Handles correctly removing attributes from nodes
   function removeAttribute(node, attr) {
-    switch (attr) {
-      case 'value':
-      case 'defaultValue':
+    if (node.nodeName === 'INPUT') {
+      if (attr === 'value' || attr === 'defaultValue') {
         node[attr] = "";
-        break;
-      case 'checked':
-      case 'defaultChecked':
+      } else if (attr === 'checked' || attr === 'defaultChecked') {
         node[attr] = false;
-        break;
-      default:
-        node.removeAttribute(attr);
+      }
     }
+    node.removeAttribute(attr);
   }
 
   // Where type is one of our available constants,
@@ -97,6 +94,12 @@
     this.attrs = attrs;
     this.children = children;
     this.parentNode = parentNode;
+
+    // Tracks whether any input values change in the tree
+    this.valueChanges = [];
+    if (Object.prototype.hasOwnProperty.call(attrs, 'value')) {
+      this.valueChanges.push(this.attrs.value);
+    }
 
     // Capture a quick reference to a key if the Node has one.
     this.key = attrs.key;
@@ -504,6 +507,10 @@
     for (var i = 0; i < len; i += 1) {
       var child = children[i];
 
+      if (child && child.valueChanges && child.valueChanges.length) {
+        node.valueChanges = node.valueChanges.concat(child.valueChanges);
+      }
+
       if (child === null || child === undefined) {
         children[i] = new Node('null', {}, []);
 
@@ -785,6 +792,17 @@
       defer(null, tree)
     }
 
+    function valuesHaveChanged(prevValList, nextValList) {
+      if (prevValList.length === nextValList.length) {
+        for (var i = 0; i < prevValList.length; i += 1) {
+          if (prevValList[i] !== nextValList[i]) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     var postMigrationCallback = null;
 
     // This function will handle migrating from the current
@@ -803,33 +821,46 @@
         postMigrationCallback = callback;
       }
 
+      // How to do an actual migration
+      var doMigration = function () {
+        updateTimer = null;
+
+        // There's a possibility updates were triggered before the app
+        // rendered. If not, run the update process moving between
+        // our two migration states.
+        if (hasRendered) {
+          updateProcess(migration[0], migration[1]);
+
+        // If updates were queued up before the initial render
+        // happened, then the initial render did not occur. It would
+        // have been a waste. Instead, we'll run the initial render
+        // now using the most current DOM state.
+        } else {
+          hasRendered = true;
+          renderProcess(migration[1], renderInto);
+        }
+
+        // Reset our migration, tracking the current reflection of the DOM.
+        migration = [migration[1]];
+        postMigrationCallback && postMigrationCallback();
+        postMigrationCallback = null;
+      };
+
+      // If the next tree contains a change to an input value, we can't update
+      // asynchronously because there's a race condition on the input field and
+      // the value gets out of sync. In that case, we throw out anything queued
+      // up and jump synchronously to the next state.
+      if (next.valueChanges.length && prev && valuesHaveChanged(prev.valueChanges, next.valueChanges)) {
+        updateTimer !== null && clearTimeout(updateTimer);
+        doMigration();
+
+      // Otherwise, we're free to continue batching updates.
       // If we don't already have a run loop ready to go, start one up.
       // If we do, stop here because the following timer function will
       // take care of everything we need when the next run loop begins.
-      if (!updateTimer) {
-        updateTimer = setTimeout(function () {
-          updateTimer = null;
-
-          // There's a possibility updates were triggered before the app
-          // rendered. If not, run the update process moving between
-          // our two migration states.
-          if (hasRendered) {
-            updateProcess(migration[0], migration[1]);
-
-          // If updates were queued up before the initial render
-          // happened, then the initial render did not occur. It would
-          // have been a waste. Instead, we'll run the initial render
-          // now using the most current DOM state.
-          } else {
-            hasRendered = true;
-            renderProcess(migration[1], renderInto);
-          }
-
-          // Reset our migration, tracking the current reflection of the DOM.
-          migration = [migration[1]];
-          postMigrationCallback && postMigrationCallback();
-          postMigrationCallback = null;
-        }, 0);
+      } else if (!updateTimer) {
+        updateTimer = setTimeout(doMigration, 0);
+      } else {
       }
 
     }

@@ -128,6 +128,22 @@ describe('lightningDOM', function () {
       })
       assert.ok(result)
     })
+
+    it('passes data to the top of the tree', async function () {
+      const result = await this.page.evaluate(() => {
+        const node = create('div', null, [
+          "foo",
+          create('div', null, [
+            "bar",
+            create('input', { value: 'baz' }, []),
+            create('input', null, []),
+            create('input', { value: 'quux' }, []),
+          ])
+        ])
+        return node.valueChanges
+      })
+      assert.deepEqual(result, ['baz', 'quux'])
+    })
   })
 
   describe('#render', function () {

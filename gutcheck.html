@@ -70,12 +70,16 @@ function goback() {
 //     return buildTree(evt.target.value, tree)
 //   }
 //
-//   tree = create('input', {
-//     id: 'myinput',
-//     type: 'text',
-//     value: inputval,
-//     onkeyup: myfun
-//   }, [])
+//   tree = create('div', { id: 'mydiv' }, [
+//     create('div', {}, [
+//       create('input', {
+//         id: 'myinput',
+//         type: 'text',
+//         value: inputval,
+//         onkeyup: myfun
+//       }, [])
+//     ])
+//   ])
 //
 //   if (oldTree) {
 //     return migrate(oldTree, tree)
