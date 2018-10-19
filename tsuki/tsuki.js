@@ -255,7 +255,7 @@
 
       // Create usable rules from the raw rules passed in
       rules && Object.keys(rules).forEach(key => {
-        this.addRule(key, this.rules[key])
+        this.addRule(key, rules[key])
       })
     }
 
