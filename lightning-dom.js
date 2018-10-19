@@ -593,7 +593,7 @@
         var attrName = change.data[0];
         var newVal = change.data[1];
 
-        if (attrName !== 'value') {
+        if (attrName !== 'value' || newVal !== change.prev.node.val) {
           setAttribute(change.prev.node, attrName, newVal);
         }
       }
