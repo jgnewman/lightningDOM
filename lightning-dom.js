@@ -856,7 +856,6 @@
     app: app,
     create: create,
     meta: {
-      version: '0.0.3',
       svgSupport: SVG.sort()
     }
   };

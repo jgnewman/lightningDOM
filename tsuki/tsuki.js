@@ -249,12 +249,12 @@
   // Every app gets a `new State`
   class State {
     constructor({ init, rules }) {
-      this.rules = rules || {};
+      this.rules = {};
       this.state = init  || {};
       this.observers = [];
 
       // Create usable rules from the raw rules passed in
-      Object.keys(this.rules).forEach(key => {
+      rules && Object.keys(rules).forEach(key => {
         this.addRule(key, this.rules[key])
       })
     }
