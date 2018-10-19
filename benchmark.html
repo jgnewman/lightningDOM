@@ -269,9 +269,9 @@
             items: []
           },
           rules: {
-            updateItems: newItems => state => {
+            updateItems: newItems => Promise.resolve(state => {
               return { ...state, stage: state.stage + 1, items: newItems }
-            }
+            })
           }
         })
 
