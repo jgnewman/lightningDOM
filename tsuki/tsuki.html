@@ -62,6 +62,10 @@
     }
   })
 
+  app.state.addObserver((newState, ruleName) => {
+    console.log(ruleName, newState)
+  })
+
 
 </script>
 </body>

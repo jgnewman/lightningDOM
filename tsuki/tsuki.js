@@ -117,7 +117,7 @@
 
       // Whenever we observe a change to the state, re-render the app
       this.state.addObserver(newState => this.phase(newState))
-      this.state.tick()
+      this.state.createRule('TSUKI_INIT', _ => state => state)()
     }
 
     // Do the initial render if we haven't done it yet. Migrate if we have.
@@ -260,10 +260,10 @@
     }
 
     // A _real_ rule generates a new state and passes it to observers
-    createRule(rule) {
+    createRule(ruleName, rule) {
       const migrateState = newState => {
         this.state = newState
-        this.observers.forEach(observer => observer(newState))
+        this.observers.forEach(observer => observer(newState, ruleName))
       }
 
       return data => {
@@ -282,7 +282,7 @@
 
     // Register a new rule manually
     addRule(name, rule) {
-      this.rules[name] = this.createRule(rule)
+      this.rules[name] = this.createRule(name, rule)
     }
 
     // Register a function to run on state change
@@ -293,11 +293,6 @@
     // Access all the rules
     getRules() {
       return this.rules
-    }
-
-    // Manually cycle the state by passing its values to all observers
-    tick() {
-      this.createRule(_ => state => state)()
     }
   }
 
