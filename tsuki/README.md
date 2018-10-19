@@ -9,13 +9,13 @@ When trying to show how virtual DOMs stack up against each other, it can be toug
 Tsuki is meant to achieve core feature parity with some of these frameworks while leveraging LightningDOM for the heavy lifting. For the purposes of these benchmarks, "core feature parity" means composable components, state management, and reactive re-rendering as a response to stage changes. With that in mind, here are the results of the latest test (smaller is better):
 
 ```
-lightningDOM (raw) v0.0.1   0.5969 seconds   ■■■■■■
-Tsuki v0.0.1                0.6544 seconds   ■■■■■■■
-vue v2.5.17                 1.2807 seconds   ■■■■■■■■■■■■■
-react v16.5.2               2.0562 seconds   ■■■■■■■■■■■■■■■■■■■■■
-preact v8.3.1               1.8245 seconds   ■■■■■■■■■■■■■■■■■■
+lightningDOM (raw) v0.0.7   0.2531 seconds   ■■■■■■
+Tsuki v0.0.1                0.2704 seconds   ■■■■■■
+vue v2.5.17                 0.8629 seconds   ■■■■■■■■■■■■■■■■■■
+react v16.5.2               1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+preact v8.3.1               1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
 
-(Tests performed on Chrome 69, macOS 10.14, 2.7GHz Intel Core i5, 16 GB RAM)
+(Tests performed on Chromium 69, Ubuntu 18.04, Lenovo ThinkPad X1 Carbon 5th generation, 2.7GHz Intel Core i7, 16 GB RAM)
 ```
 
 Keep in mind, these are _informal_ benchmarks, but they require each framework to perform the following task upon each iteration: spin up a new application, render 10,000 items, remove half of them and re-sort the list, then add them back in and re-sort the list again. The times listed above indicate the mean average time it took each framework to perform a single iteration of that task over multiple iterations.

@@ -56,13 +56,13 @@ The place where DOM manipulation really gets tricky is when you are dealing with
 Again, these are _informal_ benchmarks, but here are the average times it took for some common libraries to perform this task (smaller is better):
 
 ```
-lightningDOM v0.0.1   0.5969 seconds   ■■■■■■
-vue v2.5.17           1.2807 seconds   ■■■■■■■■■■■■■
-react v16.5.2         2.0562 seconds   ■■■■■■■■■■■■■■■■■■■■■
-preact v8.3.1         1.8245 seconds   ■■■■■■■■■■■■■■■■■■
-virtual-dom v2.1.1    1.5836 seconds   ■■■■■■■■■■■■■■■■
+lightningDOM v0.0.7   0.2531 seconds   ■■■■■■
+vue v2.5.17           0.8629 seconds   ■■■■■■■■■■■■■■■■■■
+react v16.5.2         1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+preact v8.3.1         1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
+virtual-dom v2.1.1    1.5254 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
-(Tests performed on Chrome 69, macOS 10.14, 2.7GHz Intel Core i5, 16 GB RAM)
+(Tests performed on Chromium 69, Ubuntu 18.04, Lenovo ThinkPad X1 Carbon 5th generation, 2.7GHz Intel Core i7, 16 GB RAM)
 ```
 
 > If you would like see how LightningDOM performs with a more feature-rich framework wrapped around it, check out **Tsuki** in this repo.
