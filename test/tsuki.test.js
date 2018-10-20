@@ -336,6 +336,131 @@ describe('Tsuki', function () {
       assert.equal(result, 'baz')
     })
 
+    it('allows middleware inspecting the state', async function () {
+      const result = await this.page.evaluate(() => {
+        const tracker = {
+          middlewareCount: 0,
+          rulesTriggered: [],
+          newState: {}
+        };
+        let changed = false;
+        const app = new Tsuki({
+          el: 'body',
+          init: { foo: 'bar' },
+          rules: { update: data => state => ({ ...state, foo: data }) },
+          view: ({ foo }, { update }) => {
+            if (!changed) {
+              changed = true
+              update('baz')
+            }
+            return T.div`id=app-container`(foo)
+          },
+          middleware: [
+            ({ ruleName, newState, next }) => {
+              tracker.middlewareCount += 1
+              next()
+            },
+            ({ ruleName, newState, next }) => {
+              tracker.middlewareCount += 1
+              tracker.rulesTriggered.push(ruleName)
+              tracker.newState = newState
+              next()
+            }
+          ]
+        })
+        return new Promise(resolve => {
+          setTimeout(() => resolve(tracker), 10)
+        })
+      })
+      assert.deepEqual(result, {
+        middlewareCount: 4,
+        rulesTriggered: ['TSUKI_INIT', 'update'],
+        newState: { foo: 'baz' }
+      }, result)
+    })
+
+    it('allows async middleware inspecting the state', async function () {
+      const result = await this.page.evaluate(() => {
+        const tracker = {
+          middlewareCount: 0,
+          rulesTriggered: [],
+          newState: {}
+        };
+        let changed = false;
+        const app = new Tsuki({
+          el: 'body',
+          init: { foo: 'bar' },
+          rules: { update: data => state => ({ ...state, foo: data }) },
+          view: ({ foo }, { update }) => {
+            if (!changed) {
+              changed = true
+              update('baz')
+            }
+            return T.div`id=app-container`(foo)
+          },
+          middleware: [
+            ({ ruleName, newState, next }) => {
+              tracker.middlewareCount += 1
+              tracker.rulesTriggered.push(ruleName)
+              tracker.newState = newState
+              return new Promise(resolve => resolve(next()))
+            }
+          ]
+        })
+        return new Promise(resolve => {
+          setTimeout(() => resolve(tracker), 10)
+        })
+      })
+      assert.deepEqual(result, {
+        middlewareCount: 2,
+        rulesTriggered: ['TSUKI_INIT', 'update'],
+        newState: { foo: 'baz' }
+      }, result)
+    })
+
+    it('allows middleware transforming the state', async function () {
+      const result = await this.page.evaluate(() => {
+        const tracker = {
+          middlewareCount: 0,
+          rulesTriggered: [],
+          newState: {}
+        };
+        let changed = false;
+        const app = new Tsuki({
+          el: 'body',
+          init: { foo: 'bar' },
+          rules: { update: data => state => ({ ...state, foo: data }) },
+          view: ({ foo }, { update }) => {
+            if (!changed) {
+              changed = true
+              update('baz')
+            }
+            return T.div`id=app-container`(foo)
+          },
+          middleware: [
+            ({ ruleName, newState, next }) => {
+              tracker.middlewareCount += 1
+              next({ ...newState, color: 'red' })
+            },
+            ({ ruleName, newState, next }) => {
+              tracker.middlewareCount += 1
+              tracker.rulesTriggered.push(ruleName)
+              tracker.newState = newState
+              next()
+            }
+          ]
+        })
+        return new Promise(resolve => {
+          setTimeout(() => resolve(tracker), 10)
+        })
+      })
+      assert.deepEqual(result, {
+        middlewareCount: 4,
+        rulesTriggered: ['TSUKI_INIT', 'update'],
+        newState: { foo: 'baz', color: 'red' }
+      }, result)
+    })
+
     it('allows promise-based rules', async function () {
       const result = await this.page.evaluate(() => {
         let changed = false;

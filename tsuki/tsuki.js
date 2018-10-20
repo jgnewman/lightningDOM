@@ -107,13 +107,18 @@
 
   // Every app begins with a `new Tsuki`
   class Tsuki {
-    constructor({ el, view, init, rules }) {
+    constructor({ el, view, init, rules, middleware }) {
       this.el = typeof el === 'string' ? document.querySelector(el) : el;
       this.state = new State({ init: init || {}, rules: rules || {} });
       this.view = view;
       this.app = lightningDOM.app();
       this.isRendered = false;
       this.tree = null;
+
+      // Register state transformers
+      if (Array.isArray(middleware)) {
+        middleware.forEach(ware => this.state.createTransformer(ware))
+      }
 
       // Whenever we observe a change to the state, re-render the app
       this.state.addObserver(newState => this.phase(newState))
@@ -246,12 +251,25 @@
   // Add RefCapture to Tsuki as a "static method"
   Tsuki.Ref = RefCapture;
 
+  function runAsyncFunctionArray(arr, newState, ruleName, callback) {
+    if (!arr.length) {
+      return callback(newState);
+    } else {
+      const item = arr[0];
+      const next = (transformedState=newState) => {
+        return runAsyncFunctionArray(arr.slice(1), transformedState, ruleName, callback);
+      }
+      item({ newState, ruleName, next })
+    }
+  }
+
   // Every app gets a `new State`
   class State {
     constructor({ init, rules }) {
       this.rules = {};
       this.state = init  || {};
       this.observers = [];
+      this.transformers = [];
 
       // Create usable rules from the raw rules passed in
       rules && Object.keys(rules).forEach(key => {
@@ -259,11 +277,19 @@
       })
     }
 
-    // A _real_ rule generates a new state and passes it to observers
+    // Used to transform the state after the firing of any rule, before
+    // triggering the observers
+    createTransformer(transformer) {
+      this.transformers.push(transformer)
+    }
+
+    // A _real_ rule generates a new state, runs middleware on the new state, and passes it to observers
     createRule(ruleName, rule) {
       const migrateState = newState => {
-        this.state = newState
-        this.observers.forEach(observer => observer(newState, ruleName))
+        runAsyncFunctionArray(this.transformers, newState, ruleName, transformedState => {
+          this.state = transformedState
+          this.observers.forEach(observer => observer(transformedState, ruleName))
+        })
       }
 
       return data => {

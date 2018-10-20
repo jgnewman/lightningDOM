@@ -34,7 +34,7 @@
       )
     )
 
-  const app = new Tsuki({
+  const app = window.app = new Tsuki({
     el: 'body',
     view: wrapper,
     init: {
@@ -59,12 +59,22 @@
         return state => ({ ...state, data: data })
       }
       */
-    }
+    },
+    middleware: [
+      ({ ruleName, newState, next }) => {
+        if (ruleName === 'TSUKI_INIT') {
+          const parsedState = JSON.parse(localStorage.getItem('tsuki'))
+          if (parsedState) console.log('Prepopulating values from stored state');
+          return next(parsedState || newState)
+        } else {
+          console.log('storing state')
+          localStorage.setItem('tsuki', JSON.stringify(newState))
+          return next(newState)
+        }
+      }
+    ]
   })
 
-  app.state.addObserver((newState, ruleName) => {
-    console.log(ruleName, newState)
-  })
 
 
 </script>
