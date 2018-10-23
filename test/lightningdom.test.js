@@ -3,7 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const Browser = require('./utils/spawn-browser')
 
-const SERVER_PORT = 8080
+const SERVER_PORT = 3000
 const SERVER_ROUTES = [
   {
     test: /lightning-dom\.js/,

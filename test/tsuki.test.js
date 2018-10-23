@@ -3,7 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const Browser = require('./utils/spawn-browser')
 
-const SERVER_PORT = 8080
+const SERVER_PORT = 3000
 const SERVER_ROUTES = [
   {
     test: /lightning-dom\.js/,
@@ -399,10 +399,11 @@ describe('Tsuki', function () {
             return T.div`id=app-container`(foo)
           },
           middleware: [
-            ({ ruleName, newState, next }) => {
+            ({ ruleName, newState, prevState, next }) => {
               tracker.middlewareCount += 1
               tracker.rulesTriggered.push(ruleName)
               tracker.newState = newState
+              tracker.prevState = prevState
               return new Promise(resolve => resolve(next()))
             }
           ]
@@ -414,7 +415,8 @@ describe('Tsuki', function () {
       assert.deepEqual(result, {
         middlewareCount: 2,
         rulesTriggered: ['TSUKI_INIT', 'update'],
-        newState: { foo: 'baz' }
+        newState: { foo: 'baz' },
+        prevState: { foo: 'bar' }
       }, result)
     })
 

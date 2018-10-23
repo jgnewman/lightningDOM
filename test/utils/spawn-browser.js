@@ -7,7 +7,7 @@ class Browser {
   constructor(options) {
     this.browser = null
     this.server = null
-    this.port = options.port || 8080
+    this.port = options.port || 3000
     this.routes = options.routes || []
   }
 
