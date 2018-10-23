@@ -3,7 +3,7 @@ BETA
 
 _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
 
-> Current Size: 5kb min | 3kb min + gzip
+> Current Size: ~6kb min | ~2.5kb min + gzip
 
 ![Travis Build](https://travis-ci.org/jgnewman/lightningDOM.svg?branch=master)
 
@@ -56,7 +56,7 @@ The place where DOM manipulation really gets tricky is when you are dealing with
 Again, these are _informal_ benchmarks, but here are the average times it took for some common libraries to perform this task (smaller is better):
 
 ```
-lightningDOM v0.0.14   0.2531 seconds   ■■■■■■
+lightningDOM v0.0.15   0.2531 seconds   ■■■■■■
 vue v2.5.17            0.8629 seconds   ■■■■■■■■■■■■■■■■■■
 react v16.5.2          1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 preact v8.3.1          1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
