@@ -95,12 +95,6 @@
     this.children = children;
     this.parentNode = parentNode;
 
-    // Tracks whether any input values change in the tree
-    this.valueChanges = [];
-    if (Object.prototype.hasOwnProperty.call(attrs, 'value')) {
-      this.valueChanges.push(this.attrs.value);
-    }
-
     // Capture a quick reference to a key if the Node has one.
     this.key = attrs.key;
 
@@ -507,10 +501,6 @@
     for (var i = 0; i < len; i += 1) {
       var child = children[i];
 
-      if (child && child.valueChanges && child.valueChanges.length) {
-        node.valueChanges = node.valueChanges.concat(child.valueChanges);
-      }
-
       if (child === null || child === undefined) {
         children[i] = new Node('null', {}, []);
 
@@ -792,17 +782,6 @@
       defer(null, tree)
     }
 
-    function valuesHaveChanged(prevValList, nextValList) {
-      if (prevValList.length === nextValList.length) {
-        for (var i = 0; i < prevValList.length; i += 1) {
-          if (prevValList[i] !== nextValList[i]) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
     var postMigrationCallback = null;
 
     // This function will handle migrating from the current
@@ -846,22 +825,7 @@
         postMigrationCallback = null;
       };
 
-      // If the next tree contains a change to an input value, we can't update
-      // asynchronously because there's a race condition on the input field and
-      // the value gets out of sync. In that case, we throw out anything queued
-      // up and jump synchronously to the next state.
-      if (next.valueChanges.length && prev && valuesHaveChanged(prev.valueChanges, next.valueChanges)) {
-        updateTimer !== null && clearTimeout(updateTimer);
-        doMigration();
-
-      // Otherwise, we're free to continue batching updates.
-      // If we don't already have a run loop ready to go, start one up.
-      // If we do, stop here because the following timer function will
-      // take care of everything we need when the next run loop begins.
-      } else if (!updateTimer) {
-        updateTimer = setTimeout(doMigration, 0);
-      } else {
-      }
+      updateTimer = setTimeout(doMigration, 0);
 
     }
 

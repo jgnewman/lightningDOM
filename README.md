@@ -7,6 +7,13 @@ _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
 
 ![Travis Build](https://travis-ci.org/jgnewman/lightningDOM.svg?branch=master)
 
+## Table of Contents
+
+- [What is this thing and how do I use it?](#what-is-this-thing-and-how-do-i-use-it)
+- [A note on speed and efficiency](#a-note-on-speed-and-efficiency)
+- [API](#api)
+- [Possible Gotchas](#possible-gotchas)
+
 ## What is this thing and how do I use it?
 
 LightningDOM provides an extremely simple API consisting of three primary functions: `create`, `render`, and `migrate`. It allows you to build a tree of virtual nodes, render that tree into the real DOM, then diff your tree against another virtual tree and apply the changes, thus automatically updating the real DOM. It's exactly what you'd expect!
@@ -56,7 +63,7 @@ The place where DOM manipulation really gets tricky is when you are dealing with
 Again, these are _informal_ benchmarks, but here are the average times it took for some common libraries to perform this task (smaller is better):
 
 ```
-lightningDOM v0.0.16   0.2531 seconds   ■■■■■■
+lightningDOM v0.0.17   0.2488 seconds   ■■■■■■
 vue v2.5.17            0.8629 seconds   ■■■■■■■■■■■■■■■■■■
 react v16.5.2          1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 preact v8.3.1          1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -65,7 +72,7 @@ virtual-dom v2.1.1     1.5254 seconds   ■■■■■■■■■■■■■�
 (Tests performed on Chromium 69, Ubuntu 18.04, Lenovo ThinkPad X1 Carbon 5th generation, 2.7GHz Intel Core i7, 16 GB RAM)
 ```
 
-> If you would like see how LightningDOM performs with a more feature-rich framework wrapped around it, check out **Tsuki** in this repo.
+> If you would like see how LightningDOM performs with a more feature-rich framework wrapped around it, check out **[Tsuki](https://github.com/jgnewman/lightningDOM/tree/master/tsuki)** in this repo.
 
 LightningDOM achieves its (theoretically) unmatched speed and efficiency by adhering to the following tenets. Some of these optimizations are micro and some are a little more macro:
 
@@ -103,7 +110,7 @@ You also have the option of adding event handlers exactly as you would in real H
 create('a', {onclick: () => doSomething()}, [ 'Click me!' ]);
 ```
 
-In addition to standard DOM events, lightningDOM provides two more event attributes for your convenience in the spirit of being "full-featured". They are `onmount` and `onunmount`. Neither one is called with any arguments. An `onmount` function runs only when the HTML element is injected into the DOM. An `onunmount` function runs only when the HTML element is removed from the DOM.
+In addition to standard DOM events, lightningDOM provides two more event attributes for your convenience in the spirit of being "full-featured". They are `onmount` and `onunmount`. Neither one is called with any arguments. An `onmount` function runs only when the HTML element is injected into the DOM. An `onunmount` function runs only when the HTML element is removed from the DOM. See [Potential Gotchas](#potential-gotchas) for additional information on these particular hooks.
 
 ```javascript
 create('div', {onmount: () => console.log('div was injected')});
@@ -177,9 +184,13 @@ const v3 = buildTree('Who wants pizza?');
 app.migrate(v2, v3);
 ```
 
-Note that `migrate` is also asynchronous. Apart from making things non-blocking, this serves an important purpose. In the example above, no time passes between creating and updating each subsequent version of the app. When it loads in the browser, it'll run so fast that the user won't even see our first two versions; they'll only see the last one. In a case like this, there is no reason to diff each of these versions against each other and apply changes to the DOM every time. That would be a waste. Rather, what we should _really_ do, is just render `v3` right off the bat and skip everything else!
+## Possible Gotchas
 
-To illustrate...
+### Why didn't my `onmount` function run?
+
+Tl;dr; probably because the node was mounted and removed within the same run loop. For the longer explanation, read on:
+
+The `migrate` function is asynchronous. This serves the purpose of allowing us to batch multiple updates that happen in the same run loop. Batching updates is important because it lets us avoid a bunch of unnecessary diffing and DOM painting. To illustrate, here's a diagram showing a bad technique and good technique for handling 3 virtual trees generated in the same run loop:
 
 ```
 // This is slow and wasteful!
@@ -201,8 +212,44 @@ To illustrate...
                                                         [paint dom]
 ```
 
-Part of what makes lightningDOM fast and efficient is that it does this for you.
+Part of what makes LightningDOM fast and efficient is that it does this for you.
 
-Of course, when you create your own apps, you probably won't do anything as weird as what's shown in the example. However it is possible that you could do things that trigger multiple changes within a single run loop, which would produce essentially the same effect. If that happens, we'll still have to build new versions of the virtual DOM for every update, so you don't have to worry about things not getting done that you expected to get done. But we don't have to diff and migrate the actual state of the real DOM for every one. LightningDOM will jump right to the end of that chain without wasting time in between.
+So the ultimate caveat is this: If you create an `onmount` function for a node that is added and then removed within the same run loop, that function will never run. Why? Because it's a waste of time to actually add and then immediately remove a node from the DOM without giving the user a chance to interact with it. The same goes for `onunmount`, so make sure to keep this in mind when working with these events.
 
-There is one caveat to all of this. If you create an `onmount` function for a node that is added and then removed within the same run loop, that function will never run. Why? Because it's a waste of time to immediately add and then remove a node from the DOM without giving the user a chance to even see it, much less do anything with it. The same goes for `onunmount`, so make sure to keep this in mind when working with these events.
+### Why is my text field losing characters as I type?
+
+Tl;dr; probably because you chose the wrong input event to handle. My recommendation is to use `oninput`. For the longer explanation, read on:
+
+Here's a raw implementation for managing the value on a text field. Spoiler alert — it has a problem:
+
+```javascript
+function buildTree(inputval="", oldTree) {
+
+  console.log('Input field state:', inputval)
+
+  const newTree = create('input', {
+    id: 'myinput',
+    type: 'text',
+    value: inputval,
+    onkeyup: evt => buildTree(evt.target.value, tree)
+  }, [])
+
+  if (oldTree) {
+    return migrate(oldTree, newTree)
+  } else {
+    return render(newTree, document.body)
+  }
+}
+
+buildTree()
+```
+
+In this example, the `buildTree` function creates a virtual DOM consisting of nothing but an input field. If we pass it a string value, it uses that value on the field. Whenever the `onkeyup` event is fired, we recursively run `buildTree` and hand it the new value that was typed into the field.
+
+The problem is, if we type quickly, our input field will lose characters. The reason is that LightningDOM leverages native DOM events and we can't reliably count on `onkeyup` to be fired synchronously every time we type a new value into the field. That's just the nature of the browser and of the fact that sometimes you might be pressing down on a key before having lifted your finger all the way off the previous key. Combine that with asynchronous, batched updates courtesy of LightningDOM and you start to run into problems. The way we fix this is by using a more reliable input event:
+
+```javascript
+oninput: evt => buildTree(evt.target.value, tree)
+```
+
+The `oninput` event is synchronously fired every time the field value changes, which is what we want. Having converted to `oninput`, we no longer lose characters in the field.

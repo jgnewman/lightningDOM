@@ -15,80 +15,80 @@ window.migrate = app.migrate;
 <script>
 window.addEventListener('load', () => {
 
-var initArr = [];
-var newArr = [];
-for (var i = 0; i < 10000; i += 1) {
-  initArr.push(i);
-  if (i % 2 !== 0) {
-    newArr[i % 3 === 0 ? 'unshift' : 'push'](i);
-  }
-}
-
-// Before smart sort we're looking at about 1.5 seconds to remove them
-// and about 6s to put them back. If smart sort is good, our target is
-// for it to take more like 3s to put them back. (at 10000)
-
-var tree1 =
-create('div', {style: "background: #eaeaea;"}, [
-  null,
-  create('input', {id: 'myinput', type: 'text', value: 'foo'}, []),
-  create('button', {onclick: rerender}, [ "rerender" ]),
-  create('ul', {}, [
-    initArr.map(item => create('li', {key: item+""}, [item]))
-  ])
-])
-var tree2;
-
-render(tree1, document.body)
-
-function rerender() {
-  var now = window.now = +new Date;
-
-  tree2 =
-  create('div', {style: "background: #eaeaea;"}, [
-    null,
-    create('input', {id: 'myinput', type: 'text'}, []),
-    create('button', {onclick: goback}, [ "rerender" ]),
-    create('ul', {}, [
-      newArr.map(item => create('li', {key: item+""}, [item]))
-    ])
-  ])
-
-  migrate(tree1, tree2);
-}
-
-function goback() {
-  migrate(tree2, tree1);
-}
-
-
-
-// function buildTree(inputval="", oldTree) {
-//   let tree;
-//   console.log('running')
-//   const myfun = (evt) => {
-//     return buildTree(evt.target.value, tree)
-//   }
-//
-//   tree = create('div', { id: 'mydiv' }, [
-//     create('div', {}, [
-//       create('input', {
-//         id: 'myinput',
-//         type: 'text',
-//         value: inputval,
-//         onkeyup: myfun
-//       }, [])
-//     ])
-//   ])
-//
-//   if (oldTree) {
-//     return migrate(oldTree, tree)
-//   } else {
-//     return render(tree, document.body)
+// var initArr = [];
+// var newArr = [];
+// for (var i = 0; i < 10000; i += 1) {
+//   initArr.push(i);
+//   if (i % 2 !== 0) {
+//     newArr[i % 3 === 0 ? 'unshift' : 'push'](i);
 //   }
 // }
 //
-// buildTree()
+// // Before smart sort we're looking at about 1.5 seconds to remove them
+// // and about 6s to put them back. If smart sort is good, our target is
+// // for it to take more like 3s to put them back. (at 10000)
+//
+// var tree1 =
+// create('div', {style: "background: #eaeaea;"}, [
+//   null,
+//   create('input', {id: 'myinput', type: 'text', value: 'foo'}, []),
+//   create('button', {onclick: rerender}, [ "rerender" ]),
+//   create('ul', {}, [
+//     initArr.map(item => create('li', {key: item+""}, [item]))
+//   ])
+// ])
+// var tree2;
+//
+// render(tree1, document.body)
+//
+// function rerender() {
+//   var now = window.now = +new Date;
+//
+//   tree2 =
+//   create('div', {style: "background: #eaeaea;"}, [
+//     null,
+//     create('input', {id: 'myinput', type: 'text'}, []),
+//     create('button', {onclick: goback}, [ "rerender" ]),
+//     create('ul', {}, [
+//       newArr.map(item => create('li', {key: item+""}, [item]))
+//     ])
+//   ])
+//
+//   migrate(tree1, tree2);
+// }
+//
+// function goback() {
+//   migrate(tree2, tree1);
+// }
+
+
+
+function buildTree(inputval="", oldTree) {
+  let tree;
+  console.log(inputval)
+  const myfun = (evt) => {
+    return buildTree(evt.target.value, tree)
+  }
+
+  tree = create('div', { id: 'mydiv' }, [
+    create('div', {}, [
+      create('input', {
+        id: 'myinput',
+        type: 'text',
+        value: inputval,
+        oninput: myfun
+      }, [])
+    ])
+  ])
+
+  if (oldTree) {
+    return migrate(oldTree, tree)
+  } else {
+    return render(tree, document.body)
+  }
+}
+
+buildTree()
 
 
 
