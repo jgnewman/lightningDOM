@@ -825,6 +825,7 @@
         postMigrationCallback = null;
       };
 
+      updateTimer !== null && clearTimeout(updateTimer);
       updateTimer = setTimeout(doMigration, 0);
 
     }

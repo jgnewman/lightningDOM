@@ -9,8 +9,8 @@ When trying to show how virtual DOMs stack up against each other, it can be toug
 Tsuki is meant to achieve core feature parity with some of these frameworks while leveraging LightningDOM for the heavy lifting. For the purposes of these benchmarks, "core feature parity" means composable components, state management, and reactive re-rendering as a response to stage changes. With that in mind, here are the results of the latest test (smaller is better):
 
 ```
-lightningDOM (raw) v0.0.17   0.2488 seconds   ■■■■■■
-Tsuki v0.0.16                0.2743 seconds   ■■■■■■■■
+lightningDOM (raw) v0.0.18   0.2488 seconds   ■■■■■■
+Tsuki v0.0.18                0.2633 seconds   ■■■■■■■
 vue v2.5.17                  0.8629 seconds   ■■■■■■■■■■■■■■■■■■
 react v16.5.2                1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 preact v8.3.1                1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
