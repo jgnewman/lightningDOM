@@ -1,4 +1,4 @@
-![LightningDOM](https://raw.githubusercontent.com/jgnewman/lightningDOM/master/lightningdom.png)
+![lightningDOM](https://raw.githubusercontent.com/jgnewman/lightningDOM/master/lightningdom.png)
 BETA
 
 _Aspiring to be the world's smallest, fastest, full-featured virtual DOM._
@@ -63,7 +63,7 @@ The place where DOM manipulation really gets tricky is when you are dealing with
 Again, these are _informal_ benchmarks, but here are the average times it took for some common libraries to perform this task (smaller is better):
 
 ```
-lightningDOM v0.0.18   0.2488 seconds   ■■■■■■
+lightningDOM v0.0.19   0.2488 seconds   ■■■■■■
 vue v2.5.17            0.8629 seconds   ■■■■■■■■■■■■■■■■■■
 react v16.5.2          1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 preact v8.3.1          1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -72,7 +72,7 @@ virtual-dom v2.1.1     1.5254 seconds   ■■■■■■■■■■■■■�
 (Tests performed on Chromium 69, Ubuntu 18.04, Lenovo ThinkPad X1 Carbon 5th generation, 2.7GHz Intel Core i7, 16 GB RAM)
 ```
 
-> If you would like see how LightningDOM performs with a more feature-rich framework wrapped around it, check out **[Tsuki](https://github.com/jgnewman/lightningDOM/tree/master/tsuki)** in this repo.
+> If you would like see how lightningDOM performs with a more feature-rich framework wrapped around it, check out **[Tsuki](https://github.com/jgnewman/lightningDOM/tree/master/tsuki)** in this repo.
 
 LightningDOM achieves its (theoretically) unmatched speed and efficiency by adhering to the following tenets. Some of these optimizations are micro and some are a little more macro:
 
@@ -90,30 +90,30 @@ LightningDOM achieves its (theoretically) unmatched speed and efficiency by adhe
 
 # API
 
-#### `create(String: tag [, Object: attributes, Array: children])`
+#### `create(tag: String [, attributes: Ojbect, children: Array])`
 
 Builds a virtual DOM node which represents an HTML element.
 
 Your arguments tell it what kind of element it represents, what the attributes are for that element, and what its child nodes should be.
 
-> **Note:** Currently, LightningDOM provides only basic SVG support. To see a full list of all supported svg-related tags, log `lightningDOM.meta.svgSupport`.
+> **Note:** Currently, lightningDOM provides only basic SVG support. To see a full list of all supported svg-related tags, log `lightningDOM.meta.svgSupport`.
 
 Attributes are named _exactly_ as they would be in real HTML. For example, you must use "class" instead of "className" (as opposed to other libraries like React DOM). Part of the reason lightningDOM is fast and small is that it doesn't waste time translating your attributes for you.
 
 ```javascript
-create("div", {"class": "my-class", "data-foo": "bar"});
+create("div", { "class": "my-class", "data-foo": "bar" });
 ```
 
 You also have the option of adding event handlers exactly as you would in real HTML. Because your nodes will be dynamically added and removed by lightningDOM, it is not a good idea for us to worry about multiple handlers attached to a single event on a given node. Therefore we can be faster and more efficient by using core properties like `onclick` as opposed to more robust functions like `addEventListener` which are slower and require additional cleanup.
 
 ```javascript
-create('a', {onclick: () => doSomething()}, [ 'Click me!' ]);
+create('a', { onclick: () => doSomething() }, [ 'Click me!' ]);
 ```
 
 In addition to standard DOM events, lightningDOM provides two more event attributes for your convenience in the spirit of being "full-featured". They are `onmount` and `onunmount`. Neither one is called with any arguments. An `onmount` function runs only when the HTML element is injected into the DOM. An `onunmount` function runs only when the HTML element is removed from the DOM. See [Potential Gotchas](#potential-gotchas) for additional information on these particular hooks.
 
 ```javascript
-create('div', {onmount: () => console.log('div was injected')});
+create('div', { onmount: () => console.log('div was injected') });
 ```
 
 If you include an array of children, you have four options for what you are allowed to put into that array. First, you can use more virtual nodes.
@@ -141,11 +141,11 @@ Lastly, you can use arrays. If you pass an array in as a child, each node in tha
 ```javascript
 create('ul', {}, [
   create('li', {}, [ "The first li is special and hard-coded." ]),
-  someList.map(item => create('li', {key: item.id}, [ item.text ]))
+  someList.map(item => create('li', { key: item.id }, [ item.text ]))
 ])
 ```
 
-#### `render(VNode: vdom, HtmlElement: container)`
+#### `render(vdom: VNode, container: HTMLElement)`
 
 This function takes a virtual tree you have built and renders it into the real DOM in a target of your choosing.
 
@@ -160,7 +160,7 @@ Note that you can not "unrender" an app. Once it's bound to the DOM, it's there 
 
 Also note that manipulating the real DOM is an expensive operation. As such, render is asynchronous and will not block other scripts on your page _or other actions you take within your lightningDOM app_.
 
-#### `migrate(VNode: prev, VNode: next)`
+#### `migrate(prev: VNode, next: VNode)`
 
 This function migrates a previous version of the DOM to a new version. It does this by comparing the old virtual tree to a new virtual tree, gathering up a list of changes, and then applying those changes to the real DOM automatically for you.
 
@@ -212,7 +212,7 @@ The `migrate` function is asynchronous. This serves the purpose of allowing us t
                                                         [paint dom]
 ```
 
-Part of what makes LightningDOM fast and efficient is that it does this for you.
+Part of what makes lightningDOM fast and efficient is that it does this for you.
 
 So the ultimate caveat is this: If you create an `onmount` function for a node that is added and then removed within the same run loop, that function will never run. Why? Because it's a waste of time to actually add and then immediately remove a node from the DOM without giving the user a chance to interact with it. The same goes for `onunmount`, so make sure to keep this in mind when working with these events.
 
@@ -220,7 +220,7 @@ So the ultimate caveat is this: If you create an `onmount` function for a node t
 
 Tl;dr; probably because you chose the wrong input event to handle. My recommendation is to use `oninput`. For the longer explanation, read on:
 
-Here's a raw implementation for managing the value on a text field. Spoiler alert — it has a problem:
+Here's a raw implementation for managing the value on a text field. **Spoiler alert** — it has one small problem:
 
 ```javascript
 function buildTree(inputval="", oldTree) {
@@ -244,12 +244,12 @@ function buildTree(inputval="", oldTree) {
 buildTree()
 ```
 
-In this example, the `buildTree` function creates a virtual DOM consisting of nothing but an input field. If we pass it a string value, it uses that value on the field. Whenever the `onkeyup` event is fired, we recursively run `buildTree` and hand it the new value that was typed into the field.
+In this example, the `buildTree` function creates a virtual DOM consisting of nothing but an input field. If we pass it a string value, it uses that string for the value on the field. Whenever the `onkeyup` event is fired, we recursively run `buildTree` and hand it the new value that was typed into the field. All the while we log out the current state of the text field as we type.
 
-The problem is, if we type quickly, our input field will lose characters. The reason is that LightningDOM leverages native DOM events and we can't reliably count on `onkeyup` to be fired synchronously every time we type a new value into the field. That's just the nature of the browser and of the fact that sometimes you might be pressing down on a key before having lifted your finger all the way off the previous key. Combine that with asynchronous, batched updates courtesy of LightningDOM and you start to run into problems. The way we fix this is by using a more reliable input event:
+The problem is, if we type quickly, our input field will lose characters. The reason is that lightningDOM leverages native DOM events and we can't reliably count on `onkeyup` to be fired synchronously every time we type a new character into the field. That's just the nature of the browser and of the fact that sometimes you might be pressing down on a key before having lifted your finger all the way off the previous key. Combine that with asynchronous, batched updates courtesy of lightningDOM and you start to run into problems. The way we fix this is by using a more reliable input event:
 
 ```javascript
 oninput: evt => buildTree(evt.target.value, tree)
 ```
 
-The `oninput` event is synchronously fired every time the field value changes, which is what we want. Having converted to `oninput`, we no longer lose characters in the field.
+The `oninput` event is synchronously fired every time the field value changes, which is what we want. Having converted to `onkeyup` to `oninput`, we no longer lose characters in the field.

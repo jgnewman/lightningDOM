@@ -17,24 +17,20 @@ const SERVER_ROUTES = [
 
 describe('lightningDOM', function () {
 
-  before(function () {
+  before(async function () {
     this.browser = new Browser({
       port: SERVER_PORT,
       routes: SERVER_ROUTES
     })
+
+    const page = await this.browser.getPage()
+    this.page = page
+
   })
 
   after(async function () {
-    await this.browser.closeBrowser()
-  })
-
-  beforeEach(async function () {
-    const page = await this.browser.getPage()
-    this.page = page
-  })
-
-  afterEach(async function () {
     await this.page.close()
+    await this.browser.closeBrowser()
   })
 
   describe('exports', function () {

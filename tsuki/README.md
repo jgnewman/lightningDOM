@@ -2,15 +2,15 @@
 
 ![Travis Build](https://travis-ci.org/jgnewman/lightningDOM.svg?branch=master)
 
-Tsuki is a composable component framework built on top of LightningDOM. Currently it's more of an experiment than a ready-for-use tool, but it serves to give a little more credence to LightningDOM's benchmarks.
+Tsuki is a composable component framework built on top of lightningDOM. Currently it's more of an experiment than a ready-for-use tool, but it serves to give a little more credence to lightningDOM's benchmarks.
 
 When trying to show how virtual DOMs stack up against each other, it can be tough to get your hands on raw copies of the core virtual DOM implementations that live _inside_ larger frameworks like React and Vue. Plus, in real life, people aren't using those raw implementations, they're using the larger frameworks.
 
-Tsuki is meant to achieve core feature parity with some of these frameworks while leveraging LightningDOM for the heavy lifting. For the purposes of these benchmarks, "core feature parity" means composable components, state management, and reactive re-rendering as a response to stage changes. With that in mind, here are the results of the latest test (smaller is better):
+Tsuki is meant to achieve core feature parity with some of these frameworks while leveraging lightningDOM for the heavy lifting. For the purposes of these benchmarks, "core feature parity" means composable components, state management, and reactive re-rendering as a response to stage changes. With that in mind, here are the results of the latest test (smaller is better):
 
 ```
-lightningDOM (raw) v0.0.18   0.2488 seconds   ■■■■■■
-Tsuki v0.0.18                0.2633 seconds   ■■■■■■■
+lightningDOM (raw) v0.0.19   0.2488 seconds   ■■■■■■
+Tsuki v0.0.19                0.2633 seconds   ■■■■■■■
 vue v2.5.17                  0.8629 seconds   ■■■■■■■■■■■■■■■■■■
 react v16.5.2                1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 preact v8.3.1                1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -119,7 +119,7 @@ const myApp = new Tsuki({
 
 ## API
 
-Tsuki's API is designed to be _tsuper_ simple. Every app starts with a `new Tsuki` and is built from components. All components are just functions that return Crescent syntax (i.e. LightningDom virtual trees).
+Tsuki's API is designed to be _tsuper_ simple. Every app starts with a `new Tsuki` and is built from components. All components are just functions that return Crescent syntax (i.e. lightningDOM virtual trees).
 
 When you create a `new Tsuki`, you pass in an options object with at least two properties: `el` and `view`.
 

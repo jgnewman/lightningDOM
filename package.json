@@ -1,12 +1,13 @@
 {
   "name": "lightning-dom",
   "description": "Aspiring to be the world's smallest, fastest, virtual DOM.",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "main": "lightning-dom.js",
   "repository": "git@github.com:jgnewman/lightningDOM",
   "author": "john <rescuecreative@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "dev": "python -m SimpleHTTPServer",
     "test": "mocha test/*.test.js --timeout 10000",
     "minify": "uglifyjs ./lightning-dom.js --compress --mangle --output ./lightning-dom.min.js"
   },
