@@ -12,7 +12,7 @@
     "minify": "uglifyjs ./lightning-dom.js --compress --mangle --output ./lightning-dom.min.js"
   },
   "devDependencies": {
-    "chromatica": "0.0.1",
+    "chromatica": "0.0.3",
     "http-shutdown": "1.2.0",
     "mocha": "5.2.0",
     "puppeteer": "1.8.0",

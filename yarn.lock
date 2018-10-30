@@ -37,10 +37,10 @@ buffer-from@^1.0.0:
   resolved "https://registry.yarnpkg.com/buffer-from/-/buffer-from-1.1.1.tgz#32713bc028f75c02fdb710d7c7bcec1f2c6070ef"
   integrity sha512-MQcXEUbCKtEo7bhqEs6560Hyd4XaovZlO/k9V3hjVUF/zwW7KBVdSK4gIt/bzwS9MbR5qob+F5jusZsb0YQK2A==
 
-chromatica@0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/chromatica/-/chromatica-0.0.1.tgz#16627b7cc2bd6d478ae205ca7bc57e090dd83912"
-  integrity sha512-RqdZt/ORfuwK5pMYlGJeXwOLV3wZsTU2EOSnD9emwe6ySJ0HEQzl8BmruyTRDa6CuEwlbIFnFIg0dTe5vR7nDw==
+chromatica@0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/chromatica/-/chromatica-0.0.3.tgz#93afb69432cd5aa51f424eed17d559b8d80ce19b"
+  integrity sha512-1Co+lvDjekEoLGMTln7a4bHSXpTXRZwFNw5cGuKGMhDNacY0gjHkoH4r32jGyiVCarLpUdrMiC60AC+pPejX7w==
   dependencies:
     http-shutdown "1.2.0"
     puppeteer "1.8.0"
