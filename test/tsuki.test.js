@@ -1,7 +1,7 @@
 const assert = require('assert')
 const path = require('path')
 const fs = require('fs')
-const Browser = require('./utils/spawn-browser')
+const Chromatica = require('chromatica')
 
 const SERVER_PORT = 3000
 const SERVER_ROUTES = [
@@ -22,7 +22,7 @@ const SERVER_ROUTES = [
 describe('Tsuki', function () {
 
   before(async function () {
-    this.browser = new Browser({
+    this.browser = new Chromatica({
       port: SERVER_PORT,
       routes: SERVER_ROUTES
     })
