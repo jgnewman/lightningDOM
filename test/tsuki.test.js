@@ -325,6 +325,22 @@ describe('Tsuki', function () {
         assert.deepEqual(result.attrs, { allowReorder: 'foo' })
       })
     })
+
+    context('when the tag is a component', function () {
+      it('correctly passes in attributes and children', async function () {
+        const result = await this.page.evaluate(() => {
+          const output = {}
+          const Foo = (attrs, children) => {
+            output.attrs = attrs
+            output.childLen = children.length
+          }
+          Tsuki.fromJSX(Foo, { bar: 'baz' }, "hello")
+          return output;
+        })
+        assert.deepEqual(result.attrs, { bar: 'baz' })
+        assert.equal(result.childLen, 1)
+      })
+    })
   })
 
   describe('crescent syntax', function () {

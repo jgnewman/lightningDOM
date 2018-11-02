@@ -42,4 +42,16 @@ describe('JSX Transpilation', function () {
     const expected = 'Tsuki.fromJSX("div", null, [Tsuki.fromJSX("a", { key: "foo" })]);'
     assert.equal(compiled, expected)
   })
+
+  it('receives expected code from a componentTag', function () {
+    const compiled = transpile('<div><Foo/></div>')
+    const expected = 'Tsuki.fromJSX("div", null, Tsuki.fromJSX(Foo, null));'
+    assert.equal(compiled, expected)
+  })
+
+  it('receives expected code from a componentTag with attrs and children', function () {
+    const compiled = transpile('<div><Foo bar="baz">Hello, world!</Foo></div>')
+    const expected = 'Tsuki.fromJSX("div", null, Tsuki.fromJSX(Foo, { bar: "baz" }, "Hello, world!"));'
+    assert.equal(compiled, expected)
+  })
 })

@@ -1,7 +1,7 @@
 {
   "name": "lightning-dom",
   "description": "Aspiring to be the world's smallest, fastest, virtual DOM.",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "main": "lightning-dom.js",
   "repository": "git@github.com:jgnewman/lightningDOM",
   "author": "john <rescuecreative@gmail.com>",

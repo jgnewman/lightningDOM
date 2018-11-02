@@ -265,6 +265,10 @@
     static fromJSX(tag, attrs, ...children) {
       attrs = attrs || {}
 
+      if (typeof tag === 'function') {
+        return tag(attrs, children)
+      }
+
       const newAttrs = {}
 
       Object.keys(attrs).forEach(key => {
