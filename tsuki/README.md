@@ -351,7 +351,7 @@ const myApp = new Tsuki({
 
 In this example, we created a new `Ref` object and wrapped a div in a call to `ref.capture`. We also gave it a name (`myDiv`). This provided a way for us to grab the real DOM node associated with our Crescent div by calling `ref.get` and passing in the name of the reference.
 
-**One last trick:**
+**A couple more tricks:**
 
 In the last example we passed an arrow function to our button's `onclick` attribute because, normally, `onclick` is called with an event object but we really only cared about our `rules` and `ref` data. Tsuki gives you a convenient way to generate a function in a case like this that takes all the arguments you want:
 
@@ -376,5 +376,32 @@ const myApp = new Tsuki({
 ```
 
 Here we use `T.inject` to inject `greeting` into the `onclick` function as an argument. This method inserts any number of arguments you specify _after_ any native arguments that function would normally take.
+
+Of course, the implication here is that if you attach a bunch of click handlers to `a` tags, you're going to be writing a lot of functions that do nothing but call `preventDefault` on the event and then fire another function. So Tsuki gives you a convenience method for this too:
+
+```javascript
+const component = someRule => {
+  return T.div`class=container` (
+    T.a`href=# onclick=${T.ruleFromEvent(someRule)}` ('Click me!'),
+  )
+}
+```
+
+In this example, a rule function gets passed to our component. When a user clicks on the link, `preventDefault` will be implicitly called on the event and `someRule` will fire.
+
+In a case where you'd like to utilize this convenience but are dealing with form fields instead of buttons and links, there is another useful method you can use:
+
+```javascript
+const component = someRule => {
+  return T.div`class=container` (
+    T.input`type=text placeholder=${'Type something'} oninput=${T.ruleFromEventValue(someRule)}`,
+  )
+}
+
+//...elsewhere...
+component(value => console.log(value))
+```
+
+With `ruleFromEventValue`, your rule function is called after preventing the default action on the event, but it is handed the value `event.target.value` as a single argument.
 
 And that's all there is to it!
