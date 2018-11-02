@@ -15,11 +15,23 @@
     rules.updateProp1('It worked!')
   }
 
+  const clickrule = () => {
+    console.log('rule ran!')
+  }
+
+  const inputrule = val => {
+    console.log('field val:', val)
+  }
+
   const component = (props, rules) => {
     const ref = new T.Ref()
     return T.div`class=component` (
       props.prop1,
       ref.capture('myDiv', T.div`` ("I'm a div!")),
+      T.a`class=rule-link href=/ onclick=${T.ruleFromEvent(clickrule)}` ('Run a rule'),
+      T.br``,
+      T.input`class=my-input type=text oninput=${T.ruleFromEventValue(inputrule)}`,
+      T.br``,
       T.button`class=my-button onclick=${T.inject(onclick, rules, ref)}` ('Button text')
     )
   }

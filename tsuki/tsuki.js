@@ -184,6 +184,20 @@
       return (...nativeArgs) => fn(...nativeArgs.concat(toInject))
     }
 
+    static ruleFromEvent(rule) {
+      return evt => {
+        evt.preventDefault()
+        rule()
+      }
+    }
+
+    static ruleFromEventValue(rule) {
+      return evt => {
+        evt.preventDefault()
+        rule(evt.target.value)
+      }
+    }
+
     // To be used with T.when().choose()
     // T.pick( T.when(false).choose(x), T.when(true).choose(y) )
     static pick(...conditions) {

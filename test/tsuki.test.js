@@ -225,6 +225,41 @@ describe('Tsuki', function () {
     })
   })
 
+  describe('#ruleFromEvent', function () {
+    it('prevents default on the event and runs the provided function', async function () {
+      const result = await this.page.evaluate(() => {
+        const mockEvent = {
+          defaultPrevented: false,
+          ruleRan: false,
+          preventDefault: () => mockEvent.defaultPrevented = true
+        }
+        const fnToTest = Tsuki.ruleFromEvent(() => mockEvent.ruleRan = true)
+        fnToTest(mockEvent)
+        return mockEvent
+      })
+      assert.equal(result.defaultPrevented, true)
+      assert.equal(result.ruleRan, true)
+    })
+  })
+
+  describe('#ruleFromEventValue', function () {
+    it('prevents default on the event and runs the provided function with the event target value', async function () {
+      const result = await this.page.evaluate(() => {
+        const mockEvent = {
+          defaultPrevented: false,
+          ruleReceivedValue: null,
+          preventDefault: () => mockEvent.defaultPrevented = true,
+          target: { value: 'foo' }
+        }
+        const fnToTest = Tsuki.ruleFromEventValue(val => mockEvent.ruleReceivedValue = val)
+        fnToTest(mockEvent)
+        return mockEvent
+      })
+      assert.equal(result.defaultPrevented, true)
+      assert.equal(result.ruleReceivedValue, 'foo')
+    })
+  })
+
   describe('#fromJSX', function () {
     context('when there is a tag argument and a null attrs argument', function () {
       it('builds a node with no attributes or children', async function () {
