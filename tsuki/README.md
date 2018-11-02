@@ -9,8 +9,8 @@ When trying to show how virtual DOMs stack up against each other, it can be toug
 Tsuki is meant to achieve core feature parity with some of these frameworks while leveraging lightningDOM for the heavy lifting. For the purposes of these benchmarks, "core feature parity" means composable components, state management, and reactive re-rendering as a response to stage changes. With that in mind, here are the results of the latest test (smaller is better):
 
 ```
-lightningDOM (raw) v0.0.19   0.2488 seconds   ■■■■■■
-Tsuki v0.0.19                0.2633 seconds   ■■■■■■■
+lightningDOM (raw) v0.0.20   0.2428 seconds   ■■■■■■
+Tsuki v0.0.20                0.2564 seconds   ■■■■■■
 vue v2.5.17                  0.8629 seconds   ■■■■■■■■■■■■■■■■■■
 react v16.5.2                1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 preact v8.3.1                1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -121,7 +121,7 @@ const myApp = new Tsuki({
 
 **Now back to JSX:**
 
-In order to get JSX to work in Tsuki you'll need to go through the step of setting up a JSX pragma through Babel. Essentially this consists of installing the `@babel/plugin-transform-react-jsx` plugin, and adding this to your .babelrc:
+In order to get JSX to work in Tsuki you'll need to go through the step of setting up a JSX pragma through Babel. Essentially this consists of installing the `@babel/plugin-transform-react-jsx` plugin, and adding this to your .babelrc file:
 
 ```
 plugins: [
@@ -137,7 +137,7 @@ Doing this will cause babel to translate your JSX into calls to the correct Tsuk
 new Tsuki({
   el: '#my-app-container',
   view: () => (
-    <div class="app">
+    <div className="app">
       Hello, world!
     </div>
   )

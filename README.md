@@ -63,7 +63,7 @@ The place where DOM manipulation really gets tricky is when you are dealing with
 Again, these are _informal_ benchmarks, but here are the average times it took for some common libraries to perform this task (smaller is better):
 
 ```
-lightningDOM v0.0.19   0.2488 seconds   ■■■■■■
+lightningDOM v0.0.20   0.2488 seconds   ■■■■■■
 vue v2.5.17            0.8629 seconds   ■■■■■■■■■■■■■■■■■■
 react v16.5.2          1.4046 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 preact v8.3.1          1.3000 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■
