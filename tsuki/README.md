@@ -60,9 +60,11 @@ new Tsuki({
 
 ### Syntax
 
-As you probably noticed, there's a brand new DSL in here for building the DOM. We'll call it "Crescent". This was added for 2 reasons:
+As you probably noticed, there's a brand new DSL in here for building the DOM. We'll call it "Crescent". However, Tsuki also supports JSX! But we'll get to that in a moment. First let's talk about Crescent.
 
-1. I didn't want to transpile JSX but I also wanted to avoid having to write `lightningDOM.create` a million times.
+Crescent was added for 2 reasons:
+
+1. I didn't want to transpile JSX originally but I also wanted to avoid having to write `lightningDOM.create` a million times.
 2. In complete honesty, I wanted to add some extra runtime processing to the framework since everything was so minimal otherwise and the most popular frameworks are doing a bunch more stuff outside of the core feature set.
 
 Anyway, here's how it works: Crescent is just an ES6 template rendering system. It supports all tag names supported by HTML5 that can go inside a `body` tag.
@@ -114,6 +116,31 @@ const appContainer = () => {
 const myApp = new Tsuki({
   el: '#my-app',
   view: appContainer
+})
+```
+
+**Now back to JSX:**
+
+In order to get JSX to work in Tsuki you'll need to go through the step of setting up a JSX pragma through Babel. Essentially this consists of installing the `@babel/plugin-transform-react-jsx` plugin, and adding this to your .babelrc:
+
+```
+plugins: [
+  ["@babel/plugin-transform-react-jsx", {
+    "pragma": "Tsuki.fromJSX"
+  }]
+]
+```
+
+Doing this will cause babel to translate your JSX into calls to the correct Tsuki function. Now you can write your code like this:
+
+```javascript
+new Tsuki({
+  el: '#my-app-container',
+  view: () => (
+    <div class="app">
+      Hello, world!
+    </div>
+  )
 })
 ```
 

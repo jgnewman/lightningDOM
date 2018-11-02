@@ -225,6 +225,108 @@ describe('Tsuki', function () {
     })
   })
 
+  describe('#fromJSX', function () {
+    context('when there is a tag argument and a null attrs argument', function () {
+      it('builds a node with no attributes or children', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', null)
+        })
+        assert.equal(result.tag, 'div')
+        assert.deepEqual(result.attrs, {})
+        assert.deepEqual(result.children, [])
+      })
+    })
+
+    context('when there is a tag argument and a populated attrs argument', function () {
+      it('builds a node with attributes but no children', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { id: 'foo' })
+        })
+        assert.equal(result.tag, 'div')
+        assert.deepEqual(result.attrs, { id: 'foo' })
+        assert.deepEqual(result.children, [])
+      })
+    })
+
+    context('when we have tag, attrs, and children', function () {
+      it('builds a node with attributes and children', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { id: 'foo' }, Tsuki.fromJSX('a'), Tsuki.fromJSX('span'))
+        })
+        assert.equal(result.tag, 'div')
+        assert.deepEqual(result.attrs, { id: 'foo' })
+        assert.equal(result.children.length, 2)
+        assert.equal(result.children[0].tag, 'a')
+        assert.equal(result.children[1].tag, 'span')
+      })
+    })
+
+    context('when we have a list of keyed children', function () {
+      it('builds a node with a keylist child', async function () {
+        const result = await this.page.evaluate(() => {
+          const vnode = Tsuki.fromJSX('div', null, [Tsuki.fromJSX('a', { key: 'foo' })])
+          return {
+            childAmount: vnode.children.length,
+            firstChildTag: vnode.children.length ? vnode.children[0].tag : null
+          }
+        })
+        assert.equal(result.childAmount, 1)
+        assert.equal(result.firstChildTag, 'keylist')
+      })
+    })
+
+    context('when we receive mangled attributes', function () {
+      it('converts className to class', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { className: 'foo' })
+        })
+        assert.deepEqual(result.attrs, { 'class': 'foo' })
+      })
+
+      it('converts htmlFor to for', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { htmlFor: 'foo' })
+        })
+        assert.deepEqual(result.attrs, { 'for': 'foo' })
+      })
+
+      it('converts event handlers like onClick to onclick', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { onClick: 'foo' })
+        })
+        assert.deepEqual(result.attrs, { onclick: 'foo' })
+      })
+
+      it('converts properly lowercases attribute names', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { allowFullScreen: 'foo' })
+        })
+        assert.deepEqual(result.attrs, { allowfullscreen: 'foo' })
+      })
+
+      it('converts camel-cased non-event-handlers to dashed equivalents', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { strokeWidth: 'foo' })
+        })
+        assert.deepEqual(result.attrs, { 'stroke-width': 'foo' })
+      })
+
+      it('leaves normal dashed attributes alone', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { 'data-foo': 'foo' })
+        })
+        assert.deepEqual(result.attrs, { 'data-foo': 'foo' })
+      })
+
+      it('leaves the appropriate natively camel-cased attributes alone', async function () {
+        const result = await this.page.evaluate(() => {
+          return Tsuki.fromJSX('div', { allowReorder: 'foo' })
+        })
+        assert.deepEqual(result.attrs, { allowReorder: 'foo' })
+      })
+    })
+  })
+
   describe('crescent syntax', function () {
     it('generates a vnode', async function () {
       const result = await this.page.evaluate(() => {
