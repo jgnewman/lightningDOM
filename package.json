@@ -9,9 +9,17 @@
   "scripts": {
     "dev": "python -m SimpleHTTPServer",
     "test": "mocha test/*.test.js --timeout 10000",
+    "test-ld": "mocha test/lightningdom.test.js --timeout 10000",
+    "test-tsuki": "mocha test/tsuki.test.js --timeout 10000",
+    "test-jsx": "mocha test/jsx.test.js --timeout 10000",
     "minify": "uglifyjs ./lightning-dom.js --compress --mangle --output ./lightning-dom.min.js"
   },
   "devDependencies": {
+    "@babel/cli": "7.1.2",
+    "@babel/core": "7.1.2",
+    "@babel/plugin-proposal-object-rest-spread": "7.0.0",
+    "@babel/plugin-transform-react-jsx": "7.0.0",
+    "@babel/preset-env": "7.1.0",
     "chromatica": "0.0.3",
     "http-shutdown": "1.2.0",
     "mocha": "5.2.0",

@@ -27,6 +27,40 @@
     'u', 'ul', 'video', 'wbr'
   ].concat(lightningDOM.meta.svgSupport)
 
+  // All the attributes we might receive from JSX that will need to be lower cased.
+  const JSX_ATTRS_TO_LOWER = {};
+  [
+    "accessKey", "allowFullScreen", "autoCapitalize", "autoComplete", "autoFocus", "autoPlay",
+    "bgColor", "cellPadding", "cellSpacing", "charSet", "classID", "codeBase",
+    "colSpan", "contentEditable", "contextMenu", "controlsList",
+    "crossOrigin", "dateTime", "dropZone", "encType", "formAction", "formEncType",
+    "formMethod", "formNoValidate", "formTarget", "frameBorder", "hrefLang",
+    "inputMode", "itemProp", "keyParams", "keyType", "lazyLoad", "marginHeight", "marginWidth",
+    "maxLength", "mediaGroup", "minLength", "noValidate", "radioGroup",
+    "readOnly", "rowSpan", "spellCheck", "srcDoc", "srcLang", "srcSet",
+    "tabIndex", "useMap"
+  ].forEach(item => JSX_ATTRS_TO_LOWER[item] = item)
+
+  // All the attributes we might receive from JSX that will need to remain untouched
+  const JSX_ATTRS_TO_LEAVE_UNTOUCHED = {};
+  [
+    "allowReorder", "attributeName", "attributeType", "autoReverse",
+    "baseFrequency", "baseProfile", "calcMode", "clipPathUnits",
+    "contentScriptType", "contentStyleType", "diffuseConstant", "edgeMode",
+    "externalResourcesRequired", "filterRes", "filterUnits", "glyphRef",
+    "gradientTransform", "gradientUnits", "kernelMatrix", "kernelUnitLength",
+    "keyPoints", "keySplines", "keyTimes", "lengthAdjust", "limitingConeAngle",
+    "markerHeight", "markerUnits", "markerWidth", "maskContentUnits", "maskUnits",
+    "numOctaves", "pathLength", "patternContentUnits", "patternTransform",
+    "patternUnits", "pointsAtX", "pointsAtY", "pointsAtZ", "preserveAlpha",
+    "preserveAspectRatio", "primitiveUnits", "referrerPolicy", "repeatCount",
+    "repeatDur", "requiredExtensions", "requiredFeatures", "specularConstant",
+    "specularExponent", "spreadMethod", "startOffset", "stdDeviation",
+    "stitchTiles", "surfaceScale", "systemLanguage", "tableValues", "targetX",
+    "targetY", "viewBox", "viewTarget", "xChannelSelector", "yChannelSelector",
+    "zoomAndPan"
+  ].forEach(item => JSX_ATTRS_TO_LEAVE_UNTOUCHED[item] = item)
+
   // Parses strings and vars from a template into an attributes object
   function buildAttrsFromTemplate(strings, vars) {
     const output = {}
@@ -225,6 +259,36 @@
 
     static updateAllItems(arr, updates) {
       return arr.map(obj => ({ ...obj, ...updates }))
+    }
+
+    // JSX attribute gotchas: https://reactjs.org/docs/dom-elements.html
+    static fromJSX(tag, attrs, ...children) {
+      attrs = attrs || {}
+
+      const newAttrs = {}
+
+      Object.keys(attrs).forEach(key => {
+        const val = attrs[key]
+
+        // Special attr name manipulations
+        if (key === 'className') {
+          key = 'class'
+        } else if (key === 'htmlFor') {
+          key = 'for'
+
+        // Lowercase the keyname if it's in our group to lowercase or if it's an event handler prop
+        } else if (JSX_ATTRS_TO_LOWER[key] || /^on[A-Z]/.test(key)) {
+          key = key.toLowerCase()
+
+        // Dasherize the keyname if it has a dash in it and isn't in our group of attributes to leave alone
+        } else if (!JSX_ATTRS_TO_LEAVE_UNTOUCHED[key] && /[A-Z]/.test(key)) {
+          key = key.replace(/([A-Z])/g, '-$1').toLowerCase()
+        }
+
+        newAttrs[key] = val
+      })
+
+      return lightningDOM.create(tag, newAttrs, children)
     }
 
   }
